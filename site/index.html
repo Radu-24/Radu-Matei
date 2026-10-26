@@ -884,6 +884,229 @@ button.pj{cursor:pointer}
 #island.melt{background:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:none!important}
 #island.melt::after{opacity:0}
 
+.ly-go i{display:grid;place-items:center;width:22px;height:22px;margin-right:-6px;border-radius:50%;background:rgba(0,0,0,.14);transition:transform .5s var(--spring)}
+.ly-go:hover i{transform:rotate(-45deg)}.ly.on .pv-open{cursor:pointer}
+/* the card's password field on its way to the page (and back): the field's glass, without its blur */
+.ps-fly{position:fixed;z-index:21;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.035) 55%,rgba(255,255,255,.07)),rgba(20,22,30,.55);
+  box-shadow:inset 1.4px 1.4px 0 rgba(255,255,255,.78),inset -1px -1px 0 rgba(255,255,255,.32),inset 0 0 0 1px rgba(255,255,255,.07),inset 0 12px 20px -14px rgba(255,255,255,.5),0 20px 50px rgba(0,0,0,.42)}
+
+/* ================= PASSWORD HELPER: its own page =================
+   The app's parts, working in the page: the checker, the leak check, the generator, the vault and the verification codes
+   (assets/js/pass-lab.js). The look is the app's, brought onto the site: falling hashes behind (the app's matrix rain, in
+   the page's colour and much quieter), and the island's clear glass for the things you touch: the field and the dock. */
+.p-pass{--pc:#FF5A6A;--lc:#6b7286}
+.p-pass .pw{background:#05050A}
+.ps-bg{position:sticky;top:0;height:100vh;margin-bottom:-100vh;overflow:hidden;pointer-events:none;contain:strict}
+.ps-glow{position:absolute;inset:0;background:radial-gradient(55% 45% at 78% 6%,rgba(255,90,106,.15),transparent 70%),radial-gradient(45% 40% at 8% 55%,rgba(155,123,255,.09),transparent 70%),
+  radial-gradient(70% 40% at 50% 112%,rgba(255,90,106,.08),transparent 70%)}
+.ps-rain{position:absolute;inset:0}
+.ps-rain canvas{position:absolute;left:var(--x);top:0;width:var(--w);height:var(--h);opacity:var(--o);will-change:transform;animation:psFall var(--t) linear var(--dl) infinite}
+@keyframes psFall{from{transform:translate3d(0,calc(var(--h)*-1),0)}to{transform:translate3d(0,100vh,0)}}
+.page:not(.active) .ps-rain canvas,.hush .ps-rain canvas,.mo .ps-rain canvas,.t2 .ps-rain canvas{animation-play-state:paused}
+.ps-in{position:relative;max-width:1100px;margin:0 auto;padding:calc(100px + env(safe-area-inset-top,0px)) max(24px,5vw) 70px}
+.ps-k{margin:0 0 12px;font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--muted)}
+.p-pass .ps-t{margin:0;font-size:clamp(40px,5.2vw,76px);font-weight:700;letter-spacing:-.05em;line-height:.9;white-space:nowrap;text-wrap:nowrap;transform-origin:0 0}
+.ps-s{margin:14px 0 0;color:#AEB4C4;font-size:16px;max-width:54ch}
+/* the level colours the meter, the verdict and the field's glow */
+.ps-hero[data-level="0"]{--lc:#FF5A6A}.ps-hero[data-level="1"]{--lc:#FF9F43}.ps-hero[data-level="2"]{--lc:#FFE14D}.ps-hero[data-level="3"]{--lc:#5CF59A}.ps-hero[data-level="4"]{--lc:#4DE1C8}.ps-hero[data-level=x]{--lc:#FF3B4E}
+/* the field: the island's glass, grown into an input */
+.ps-field{position:relative;display:flex;align-items:center;gap:8px;max-width:760px;height:68px;margin-top:34px;padding:0 12px 0 22px;border-radius:34px;
+  background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.035) 55%,rgba(255,255,255,.07));
+  box-shadow:inset 1.4px 1.4px 0 rgba(255,255,255,.78),inset -1px -1px 0 rgba(255,255,255,.32),inset 0 0 0 1px rgba(255,255,255,.07),
+    inset 0 12px 20px -14px rgba(255,255,255,.5),inset 0 -12px 20px -16px rgba(255,255,255,.22),0 20px 50px rgba(0,0,0,.42);
+  -webkit-backdrop-filter:blur(14px) saturate(1.7);backdrop-filter:blur(14px) saturate(1.7)}
+.ps-field::after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .4s,box-shadow .4s;
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--lc) 26%,transparent),0 0 34px color-mix(in srgb,var(--lc) 30%,transparent)}
+.ps-field:focus-within::after,.ps-field.has::after{opacity:1}
+.ps-field .ico{flex:none;width:22px;height:22px;color:#8C92A6;transition:color .4s}.ps-field.has .ico{color:var(--lc)}
+.ps-field input{flex:1;min-width:0;height:100%;border:0;margin:0;padding:0;background:none;color:#fff;font:500 20px/1 var(--mono);letter-spacing:.02em;outline:none}
+.ps-field input::placeholder{color:#6b7286;font-family:var(--sans);letter-spacing:0}
+.ps-eye,.ps-x{flex:none;display:grid;place-items:center;width:44px;height:44px;border:0;padding:0;border-radius:22px;cursor:pointer;color:#C9CEDA;background:rgba(255,255,255,.06);
+  transition:background .25s,scale .45s var(--spring)}
+.ps-eye:hover,.ps-x:hover{background:rgba(255,255,255,.12)}.ps-eye:active,.ps-x:active{scale:.9}
+.ps-eye svg{width:21px;height:21px}.ps-x svg{width:15px;height:15px}
+.ps-eye .sl{stroke-dasharray:23;stroke-dashoffset:0;transition:stroke-dashoffset .35s cubic-bezier(.2,.7,.2,1)}.ps-eye.on .sl{stroke-dashoffset:23}
+.t2 .ps-field,.hush .ps-field{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}.t2 .ps-field{background:rgba(22,24,32,.92)}
+.ps-meter{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:760px;margin-top:16px}
+.ps-meter i{position:relative;height:6px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.08)}
+.ps-meter i::after{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--lc);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--spring),background-color .45s}
+.ps-meter i.on::after{transform:scaleX(1)}
+.ps-meter i:nth-child(2)::after{transition-delay:.04s,0s}.ps-meter i:nth-child(3)::after{transition-delay:.08s,0s}.ps-meter i:nth-child(4)::after{transition-delay:.12s,0s}.ps-meter i:nth-child(5)::after{transition-delay:.16s,0s}
+.ps-verdict{margin:16px 0 0;min-height:50px}.ps-verdict b{display:block;font-size:21px;letter-spacing:-.02em;color:var(--lc);transition:color .45s}
+.ps-hero:not([data-level]) .ps-verdict b,.ps-hero[data-level="-1"] .ps-verdict b{color:#EEF0F8}
+.ps-verdict span{display:block;margin-top:3px;color:#AEB4C4;font-size:15px}
+.ps-try{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ps-try button{border:0;padding:7px 13px;border-radius:999px;cursor:pointer;font:500 12.5px var(--mono);color:#C9CEDA;background:rgba(255,255,255,.05);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);transition:background .25s,color .25s,scale .45s var(--spring)}
+.ps-try button:hover{background:rgba(255,255,255,.1);color:#fff}.ps-try button:active{scale:.94}
+.ps-try [data-try=gen]{font-family:var(--sans);color:var(--pc)}
+/* what the check found: dimmed until there is something to show */
+.ps-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:36px;transition:opacity .5s}
+.ps-grid:not(.on){opacity:.5}
+.ps-card{padding:20px 22px 20px;border-radius:24px}
+.ps-card h3,.ps-lab{margin:0 0 12px;font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#8C92A6}
+.ps-checks ul{list-style:none;margin:0;padding:0}
+.ps-checks li{display:flex;align-items:flex-start;gap:11px;padding:7px 0;font-size:15px;color:#C9CEDA;transition:color .3s}
+.ps-checks li i{flex:none;position:relative;width:19px;height:19px;margin-top:1px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22);transition:background .3s,box-shadow .3s}
+.ps-checks li[data-s=ok]{color:#EEF0F8}.ps-checks li[data-s=ok] i{background:#5CF59A;box-shadow:none}
+.ps-checks li[data-s=bad] i{background:#FF5A6A;box-shadow:none}
+.ps-checks li[data-s=ok] i::after,.ps-checks li[data-s=bad] i::after{content:"";position:absolute;inset:0;background:#07080D;
+  -webkit-mask:var(--m) center/11px no-repeat;mask:var(--m) center/11px no-repeat}
+.ps-checks li[data-s=ok] i{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.3l2.6 2.5L10 3.3' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.ps-checks li[data-s=bad] i{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 3l6 6M9 3L3 9' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E")}
+.ps-checks li[data-s=wait] i{box-shadow:inset 0 0 0 2px rgba(255,255,255,.12);border-top:2px solid var(--pc);animation:psSpin .8s linear infinite}
+@keyframes psSpin{to{rotate:1turn}}
+.ps-checks li button{margin-left:auto;flex:none;border:0;padding:4px 11px;border-radius:999px;cursor:pointer;font:600 12.5px var(--sans);color:#07080D;background:var(--pc)}
+.ps-note,.ps-tips{margin:12px 0 0;font-size:13px;line-height:1.5;color:#8C92A6}
+.ps-times dl{margin:0;display:grid;gap:2px}
+.ps-times div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}.ps-times div:last-child{border:0}
+.ps-times dt{color:#AEB4C4;font-size:14.5px}.ps-times dd{margin:0;font:500 14px var(--mono);color:#EEF0F8;text-align:right;white-space:nowrap}
+#ps-tokens{display:grid;gap:8px}
+.ps-tok{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:14px;color:#AEB4C4}
+.ps-tok code{padding:3px 9px;border-radius:8px;font:500 13.5px var(--mono);color:#fff;background:color-mix(in srgb,var(--lc) 22%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--lc) 45%,transparent)}
+.ps-none{margin:0;color:#8C92A6;font-size:14px}
+/* the sections below */
+.ps-sec{position:relative;margin-top:20vh}
+.ps-sec h2{margin:16vh 0 20px;font-size:clamp(30px,4.4vw,52px);letter-spacing:-.04em;line-height:1}
+.ps-sec h2:first-child{margin-top:0}
+.ps-sec .al{margin:0 0 28px;color:#AEB4C4;max-width:64ch;font-size:17px}
+.ps-anon,.ps-gen,.ps-vault,.ps-totp{border-radius:30px;padding:26px 28px}
+/* the leak check: the hash, the 5 characters that go, and the trip there and back */
+.ps-hash{margin:0;font:500 clamp(14px,1.75vw,20px)/1.5 var(--mono);letter-spacing:.06em;word-break:break-all}
+#ps-h5{display:inline-block;padding:0 6px;margin-right:4px;border-radius:8px;color:#07080D;background:var(--pc);box-shadow:0 0 22px color-mix(in srgb,var(--pc) 45%,transparent)}
+#ps-h35{color:#5d6375;border-radius:6px;transition:color .4s}
+.ps-anon.has #ps-h35{color:#8C92A6}
+.ps-legend{display:flex;gap:18px;margin:10px 0 0;font-size:13px;color:#8C92A6}.ps-legend i{display:inline-block;width:9px;height:9px;margin-right:7px;border-radius:3px;background:#5d6375}.ps-legend i.s{background:var(--pc)}
+.ps-lane{position:relative;height:120px;margin:22px 0 18px}
+.ps-lane::before{content:"";position:absolute;left:150px;right:190px;top:50%;height:1.5px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.22) 0 6px,transparent 6px 13px)}
+.ps-node{position:absolute;top:50%;translate:0 -50%;display:grid;gap:2px;padding:12px 18px;border-radius:20px;text-align:center;
+  background:linear-gradient(180deg,#1c212c,#12161e 70%,#151a23);box-shadow:inset 1.2px 1.2px 0 rgba(255,255,255,.34),inset -1px -1px 0 rgba(255,255,255,.08),inset 0 10px 16px -12px rgba(255,255,255,.18),0 10px 24px rgba(0,0,0,.35)}
+.ps-node b{font-size:14.5px;letter-spacing:-.01em}.ps-node span{font:11px var(--mono);color:#8FA0B8}
+.ps-node.a{left:0}.ps-node.b{right:0}
+.ps-node.b::after{content:"";position:absolute;inset:-6px;border-radius:26px;box-shadow:0 0 0 1.5px var(--pc);opacity:0}
+.ps-node.b.busy::after{animation:psPing 1s cubic-bezier(.2,.6,.4,1) infinite}
+@keyframes psPing{0%{opacity:.9;scale:.96}100%{opacity:0;scale:1.18}}
+.ps-n{position:absolute;left:50%;bottom:-4px;translate:-50% 0;font:12px var(--mono);color:#8C92A6;white-space:nowrap}
+.ps-pkt{position:absolute;left:0;top:0;z-index:2;padding:3px 9px;border-radius:9px;font:600 14px var(--mono);color:#07080D;background:var(--pc);box-shadow:0 0 24px var(--pc);pointer-events:none;will-change:transform}
+.ps-back{position:absolute;left:0;top:0;width:20px;height:3px;border-radius:3px;background:linear-gradient(90deg,#fff,color-mix(in srgb,var(--pc) 60%,#fff));box-shadow:0 0 10px rgba(255,255,255,.4);pointer-events:none;will-change:transform}
+.ps-row{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px}
+.ps-row .btn:disabled{opacity:.45;cursor:default;scale:1}
+.ps-res{margin:0;font-size:15.5px;color:#AEB4C4}.ps-res.ok{color:#5CF59A}.ps-res.bad{color:#FF6B7A}.ps-res.wait{color:#C9CEDA}
+.ps-fine{margin:16px 0 0;font-size:13px;line-height:1.5;color:#6b7286}
+/* the generator */
+.ps-seg{position:relative;display:inline-flex;padding:4px;border-radius:999px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.ps-seg button{position:relative;z-index:1;border:0;padding:9px 18px;border-radius:999px;cursor:pointer;background:none;color:#AEB4C4;font:600 14px var(--sans);transition:color .35s}
+.ps-seg button.on{color:#07080D}
+.ps-seg-pill{position:absolute;left:0;top:4px;bottom:4px;width:0;border-radius:999px;background:linear-gradient(180deg,#fff,#dde2ee);
+  box-shadow:inset 0 1px 0 #fff,0 4px 14px rgba(0,0,0,.35);transition:transform .6s var(--spring),width .6s var(--spring)}
+.ps-out{display:block;min-height:1.4em;margin:24px 0 8px;font:500 clamp(18px,2.4vw,28px)/1.35 var(--mono);letter-spacing:.02em;word-break:break-all;color:#F1F3F9;transition:opacity .25s}
+.ps-out.wait{opacity:.4}.ps-out .d{color:#4DC8FF}.ps-out .y{color:#FF9F43}
+.ps-ent{margin:0;font-size:14px;color:#8C92A6}.ps-ent b{color:#EEF0F8;font-family:var(--mono)}
+#ps-blab[data-l="Very strong"],#ps-blab[data-l=Strong]{color:#5CF59A}#ps-blab[data-l=Fair]{color:#FFE14D}#ps-blab[data-l=Weak],#ps-blab[data-l="Very weak"]{color:#FF9F43}
+.ps-range{display:flex;align-items:center;gap:14px;max-width:520px;margin-top:22px;font-size:14.5px;color:#AEB4C4}
+.ps-range b{min-width:2ch;font:600 15px var(--mono);color:#fff;text-align:right}
+.ps-range input{flex:1;height:28px;margin:0;background:none;-webkit-appearance:none;appearance:none;cursor:pointer}
+.ps-range input::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:linear-gradient(90deg,var(--pc),color-mix(in srgb,var(--pc) 40%,#fff));opacity:.85}
+.ps-range input::-moz-range-track{height:6px;border-radius:6px;background:linear-gradient(90deg,var(--pc),color-mix(in srgb,var(--pc) 40%,#fff))}
+.ps-range input::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-10px;border-radius:50%;background:linear-gradient(180deg,#fff,#dde2ee);box-shadow:inset 0 1px 0 #fff,0 3px 10px rgba(0,0,0,.45)}
+.ps-range input::-moz-range-thumb{width:26px;height:26px;border:0;border-radius:50%;background:linear-gradient(180deg,#fff,#dde2ee);box-shadow:0 3px 10px rgba(0,0,0,.45)}
+.ps-opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.ps-chip{border:0;padding:8px 14px;border-radius:999px;cursor:pointer;font:500 13.5px var(--sans);color:#8C92A6;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);
+  transition:color .25s,background .25s,box-shadow .25s,scale .45s var(--spring)}
+.ps-chip.on{color:#fff;background:color-mix(in srgb,var(--pc) 18%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc) 55%,transparent)}
+.ps-chip:active{scale:.94}.ps-chip b{font-family:var(--mono)}
+.ps-gen[data-mode=pw] .pp-only,.ps-gen[data-mode=pp] .pw-only{display:none}
+.ps-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.ps-acts .btn,.nexts a.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none}.ps-acts svg,.nexts svg{width:16px;height:16px}
+/* the vault: the four steps light up as they happen */
+.ps-vault{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px 32px}
+.ps-steps{grid-column:1/-1;list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;counter-reset:s}
+.ps-step{position:relative;display:grid;gap:3px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);transition:background .4s,box-shadow .4s}
+.ps-step b{font-size:14.5px;color:#C9CEDA;transition:color .4s}.ps-step span{font-size:12.5px;color:#6b7286}
+.ps-step:not(:last-child)::after{content:"";position:absolute;right:-9px;top:50%;width:8px;height:1.5px;background:rgba(255,255,255,.2)}
+.ps-step.on{background:color-mix(in srgb,var(--pc) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc) 55%,transparent),0 0 30px color-mix(in srgb,var(--pc) 22%,transparent)}
+.ps-step.on b,.ps-step.done b{color:#fff}
+.ps-step.done{background:rgba(92,245,154,.07);box-shadow:inset 0 0 0 1px rgba(92,245,154,.35)}
+.ps-step.on::before{content:"";position:absolute;left:12px;right:12px;bottom:6px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--pc),transparent);
+  background-size:50% 100%;background-repeat:no-repeat;animation:psScan 1s linear infinite}
+@keyframes psScan{from{background-position:-100% 0}to{background-position:200% 0}}
+.ps-vin{display:grid;gap:12px;align-content:start}
+.ps-f2{display:grid;gap:6px;font-size:13px;color:#8C92A6}
+.ps-f2 input{height:48px;padding:0 16px;border:0;border-radius:16px;outline:none;font:500 15px var(--mono);color:#fff;background:rgba(255,255,255,.05);
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.22),inset -1px -1px 0 rgba(255,255,255,.06),inset 0 0 0 1px rgba(255,255,255,.06);transition:box-shadow .3s}
+.ps-f2 input:focus{box-shadow:inset 1px 1px 0 rgba(255,255,255,.35),inset 0 0 0 1px color-mix(in srgb,var(--pc) 70%,transparent),0 0 0 4px color-mix(in srgb,var(--pc) 18%,transparent)}
+.ps-f2 input::placeholder{color:#5d6375;font-family:var(--sans)}
+.ps-vin .btn{justify-self:start}
+.ps-vout{display:grid;gap:12px;align-content:start;opacity:.4;transition:opacity .5s}
+.ps-vault.locked .ps-vout{opacity:1}
+.ps-vout dl{margin:0;display:grid;gap:8px}
+.ps-vout dl div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px}
+.ps-vout dt{font-size:13px;color:#8C92A6}.ps-vout dd{margin:0;min-height:1.4em;font:13px/1.45 var(--mono);color:#C9CEDA;word-break:break-all}
+#ps-v-ct{color:var(--pc)}
+.ps-vtime{margin:0;font-size:13px;color:#8C92A6}
+.ps-un{grid-template-columns:minmax(0,1fr) auto;align-items:end}
+.ps-vault:not(.locked) .ps-un{pointer-events:none}
+.ps-vres{margin:0;font-size:15px;color:#AEB4C4}.ps-vres.ok{color:#5CF59A;font-family:var(--mono)}.ps-vres.bad{color:#FF6B7A}
+/* verification codes: the code, and a hand sweeping round once every 30 seconds */
+.ps-totp{display:flex;align-items:center;gap:30px}
+.ps-ring{position:relative;flex:none;display:grid;place-items:center;width:124px;height:124px;border-radius:50%;box-shadow:inset 0 0 0 6px rgba(255,255,255,.07)}
+.ps-ring svg{width:40px;height:40px;color:var(--pc)}
+.ps-sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 62%,color-mix(in srgb,var(--pc) 70%,transparent) 99%,#fff 100%);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));
+  animation:psSweep 30s linear infinite paused;will-change:transform}
+.ps-ring.run .ps-sweep{animation-play-state:running}
+@keyframes psSweep{to{rotate:1turn}}
+.page:not(.active) .ps-sweep,.hush .ps-sweep,.mo .ps-sweep{animation-play-state:paused!important}
+.ps-code{display:flex;margin:0;font:600 clamp(44px,6vw,66px)/1 var(--mono);letter-spacing:.02em;color:#fff}
+.ps-code span{display:inline-block;min-width:.62em;text-align:center}.ps-code .g{margin-left:.32em}
+.ps-key{margin:12px 0 0;font-size:14px;color:#AEB4C4}.ps-key code{font-family:var(--mono);color:#fff;padding:2px 8px;border-radius:7px;background:rgba(255,255,255,.07)}
+.ps-totp .ps-fine{margin-top:6px}
+/* locked down, in numbers, the story */
+.ps-layers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ps-layer{display:grid;gap:5px;padding:18px 20px;border-radius:22px}.ps-layer b{font-size:16px;letter-spacing:-.01em}.ps-layer span{font-size:14.5px;color:#AEB4C4}
+.p-pass .stats{--tc:var(--pc)}
+.ps-time{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.ps-time li{display:grid;gap:6px;align-content:start;padding:18px 18px 20px;border-radius:22px}
+.ps-time b{font:600 13px var(--mono);letter-spacing:.06em;color:var(--pc)}.ps-time span{font-size:14.5px;color:#C9CEDA}
+.ps-time .nx{opacity:.7;background:repeating-linear-gradient(135deg,rgba(255,255,255,.025) 0 10px,transparent 10px 20px),var(--lq-fill)}
+.p-pass .nexts{margin-top:12vh}
+/* things rise in as they come into view (scroll-driven, on the compositor) */
+@supports (animation-timeline:view()){
+  .ps-rv{animation:psIn linear both;animation-timeline:view();animation-range:entry 0% cover 24%}
+}
+@keyframes psIn{from{opacity:0;translate:0 46px;scale:.97}to{opacity:1;translate:0 0;scale:1}}
+/* the dock: the island's glass again, a pill gliding to the part in view. Sticky at the bottom of the page (a fixed element
+   inside the page's scroll box would scroll with it) */
+.ps-dock{position:sticky;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:6;display:flex;width:fit-content;max-width:calc(100% - 20px);margin:0 auto 18px;padding:5px;border-radius:999px;
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04) 55%,rgba(255,255,255,.08));
+  box-shadow:inset 1.4px 1.4px 0 rgba(255,255,255,.78),inset -1px -1px 0 rgba(255,255,255,.32),inset 0 0 0 1px rgba(255,255,255,.07),
+    inset 0 12px 20px -14px rgba(255,255,255,.5),inset 0 -12px 20px -16px rgba(255,255,255,.22),0 20px 50px rgba(0,0,0,.42);
+  -webkit-backdrop-filter:blur(14px) saturate(1.7);backdrop-filter:blur(14px) saturate(1.7)}
+.ps-dock button{position:relative;z-index:1;border:0;padding:10px 15px;border-radius:999px;cursor:pointer;background:none;color:#AEB4C4;font:600 13.5px var(--sans);white-space:nowrap;transition:color .35s}
+.ps-dock button:hover{color:#fff}.ps-dock button.on{color:#fff}
+.ps-dock-pill{position:absolute;left:0;top:5px;bottom:5px;width:0;border-radius:999px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 42%,rgba(255,255,255,.12)),color-mix(in srgb,var(--pc) 22%,transparent));
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.5),inset 0 0 0 1px color-mix(in srgb,var(--pc) 45%,transparent),0 6px 18px color-mix(in srgb,var(--pc) 25%,transparent);
+  transition:transform .6s var(--spring),width .6s var(--spring)}
+.t2 .ps-dock,.hush .ps-dock{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}.t2 .ps-dock{background:rgba(22,24,32,.92)}
+.ps-on .edge.b{opacity:0}   /* the dock stands where the frosted bottom edge would blur it */
+@media (max-width:860px){
+  .ps-grid,.ps-layers,.ps-vault{grid-template-columns:1fr}
+  .ps-time{grid-template-columns:1fr 1fr}
+  .ps-steps{grid-template-columns:1fr 1fr}.ps-step:nth-child(2)::after{display:none}
+}
+@media (max-width:560px){
+  .ps-field{height:60px;padding-left:18px;border-radius:30px}.ps-field input{font-size:17px}.ps-eye,.ps-x{width:40px;height:40px}
+  .ps-anon,.ps-gen,.ps-vault,.ps-totp{padding:22px 20px;border-radius:26px}
+  .ps-lane{height:150px}.ps-lane::before{left:50%;right:auto;top:52px;bottom:52px;width:1.5px;height:auto;background:repeating-linear-gradient(180deg,rgba(255,255,255,.22) 0 6px,transparent 6px 13px)}
+  .ps-node{left:50%!important;right:auto!important;translate:-50% 0;padding:9px 14px}.ps-node.a{top:0}.ps-node.b{top:auto;bottom:0}
+  .ps-n{left:auto;right:0;bottom:50%;translate:0 50%}
+  .ps-totp{flex-direction:column;align-items:flex-start;gap:20px}
+  .ps-time{grid-template-columns:1fr}
+  .ps-dock{bottom:calc(12px + env(safe-area-inset-bottom,0px));margin-bottom:12px}.ps-dock button{padding:9px 10px;font-size:12.5px}
+}
+@media (prefers-reduced-motion:reduce){.ps-rain canvas{animation:none!important;transform:translate3d(0,var(--y0),0)}.ps-rv{animation:none!important}}
+
 .toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:60;transform:translate(-50%,14px);opacity:0;padding:11px 18px;border-radius:999px;font-size:14px;
   background:radial-gradient(120% 160% at 28% -20%,rgba(255,255,255,.16),transparent 60%),rgba(20,22,30,.62);
   box-shadow:inset 1.2px 1.2px 0 rgba(255,255,255,.6),inset -1px -1px 0 rgba(255,255,255,.18),inset 0 10px 16px -12px rgba(255,255,255,.3),0 16px 40px rgba(0,0,0,.5);
@@ -978,7 +1201,7 @@ button.pj{cursor:pointer}
 
     <footer class="foot">
       <p class="c">© 2026 Radu Matei. All rights reserved.</p>
-      <p>No cookies, no analytics, no tracking. While this tab is open, it remembers one thing: whether you have found the menu, so the hint stops. Fonts and code load from this site, so your browser contacts no one else. The host, GitHub Pages, keeps standard server logs, including IP addresses, for security.</p>
+      <p>No cookies, no analytics, no tracking. While this tab is open, it remembers one thing: whether you have found the menu, so the hint stops. Fonts and code load from this site, so your browser contacts no one else, unless you ask the Password Helper page to check a password for leaks: then the first 5 characters of its hash go to Have I Been Pwned. The host, GitHub Pages, keeps standard server logs, including IP addresses, for security.</p>
       <p class="cr">Type: Instrument Sans and IBM Plex Mono (SIL OFL). 3D: three.js (MIT).</p>
     </footer>
   </div></div></section>
@@ -1004,8 +1227,8 @@ button.pj{cursor:pointer}
       <div class="ly" style="--pc:#FF5A6A"><div class="ly-in">
         <button class="ly-n" type="button">Password Helper</button>
         <div class="ly-b">
-          <div class="ly-t"><span class="no">02 · Desktop app</span><p class="d">A password manager for your computer. It tells you how strong a password is, checks if it showed up in a known leak, keeps everything in an encrypted vault and shows your 2FA codes.</p><div class="tags"><span>Electron</span><span>Node.js</span><span>AES-256</span><span>Have I Been Pwned</span></div><div class="ly-l"><a class="btn s" href="https://github.com/Radu-24/Password-Helper" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Code on GitHub</a><span class="later"><i></i>Full page coming soon</span></div></div>
-          <div class="ly-w lq" aria-hidden="true"><div class="pv pv-pass"><div class="fld"><b>••••••••••</b><em>R4du!tennis-2026</em></div><div class="bar2"><i></i></div><div class="st"><span>Strength</span><b>Weak · leaked</b></div></div></div>
+          <div class="ly-t"><span class="no">02 · Desktop app</span><p class="d">A password manager for your computer. It tells you how strong a password is, checks if it showed up in a known leak, keeps everything in an encrypted vault and shows your 2FA codes.</p><div class="tags"><span>Electron</span><span>Node.js</span><span>AES-256</span><span>Have I Been Pwned</span></div><div class="ly-l"><a class="btn s" href="https://github.com/Radu-24/Password-Helper" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Code on GitHub</a><button class="btn p ly-go" type="button" id="pj-pass">Open project<i><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></i></button></div></div>
+          <div class="ly-w lq pv-open" aria-hidden="true"><div class="pv pv-pass"><div class="fld"><b>••••••••••</b><em>Tennis2026</em></div><div class="bar2"><i></i></div><div class="st"><span>Strength</span><b>Weak · leaked</b></div></div></div>
         </div>
       </div></div>
       <div class="ly" style="--pc:#FFE14D"><div class="ly-in">
@@ -1205,6 +1428,122 @@ last = t</pre></div>
       </section>
     </div>
   </div></section>
+  <section class="page p-pass" id="pg-pass" aria-label="Password Helper"><div class="pw">
+    <div class="ps-bg" aria-hidden="true"><i class="ps-glow"></i><div class="ps-rain"></div></div>
+    <div class="ps-in">
+      <section class="ps-hero" data-sec="check" aria-labelledby="ps-title">
+        <p class="ps-k">02 · Desktop app · Electron</p>
+        <h1 class="ps-t" id="ps-title">Password Helper</h1>
+        <p class="ps-s">A password manager for your computer, and the strength checker it grew out of. The checker works right here: it runs in this page, and nothing you type is stored or sent.</p>
+        <div class="ps-field">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 018 0v3"/></svg>
+          <input id="ps-in" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type a password" aria-label="Password to check" aria-describedby="ps-verdict">
+          <button class="ps-x" type="button" aria-label="Clear" hidden><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg></button>
+          <button class="ps-eye" type="button" aria-label="Show password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/><path class="sl" d="M4 4l16 16"/></svg></button>
+        </div>
+        <div class="ps-meter" id="ps-meter" role="meter" aria-label="Strength" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0"><i></i><i></i><i></i><i></i><i></i></div>
+        <p class="ps-verdict" id="ps-verdict" aria-live="polite"><b>Nothing to check yet</b><span>Type a password, or try one of these.</span></p>
+        <div class="ps-try"><button type="button" data-try="password123">password123</button><button type="button" data-try="Tennis2026">Tennis2026</button><button type="button" data-try="P@ssw0rd">P@ssw0rd</button><button type="button" data-try="correct horse battery staple">correct horse battery staple</button><button type="button" data-try="gen">a random one</button></div>
+        <div class="ps-grid">
+          <div class="ps-card ps-checks lq ps-rv"><h3>The rules</h3>
+            <ul><li data-c="len"><i></i><span>At least 15 characters</span></li><li data-c="guess"><i></i><span>Hard to guess: no common words, names or patterns</span></li><li data-c="breach"><i></i><span>Not in known breaches (not checked yet)</span><button type="button" hidden>Check</button></li></ul>
+            <p class="ps-note">From NIST SP 800-63B-4: length and not being guessable are what count. Rules like “add a symbol” are out.</p></div>
+          <div class="ps-card ps-times lq ps-rv"><h3>Time to crack</h3>
+            <dl><div><dt>Offline, slow hash</dt><dd id="ps-t-slow">—</dd></div><div><dt>Offline, fast hash</dt><dd id="ps-t-fast">—</dd></div><div><dt>Online, no limits</dt><dd id="ps-t-online">—</dd></div><div><dt>Online, rate-limited</dt><dd id="ps-t-throttled">—</dd></div></dl></div>
+          <div class="ps-card ps-pat lq ps-rv"><h3>What an attacker tries first</h3><div id="ps-tokens"><p class="ps-none">Patterns show up here as you type.</p></div><p class="ps-tips" id="ps-tips"></p></div>
+        </div>
+      </section>
+
+      <section class="ps-sec" data-sec="leak" aria-labelledby="ps-h-leak">
+        <h2 id="ps-h-leak" class="ps-rv">Has it leaked?</h2>
+        <p class="al ps-rv">Have I Been Pwned knows close to a billion leaked passwords. The app asks it without ever telling it the password: only the first 5 characters of the password’s SHA-1 hash leave. Back comes every leaked hash that starts the same way, and the match is made here.</p>
+        <div class="ps-anon lq ps-rv">
+          <p class="ps-lab">SHA-1 of your password</p>
+          <p class="ps-hash"><span id="ps-h5">·····</span><span id="ps-h35">···································</span></p>
+          <p class="ps-legend"><span><i class="s"></i>sent</span><span><i></i>never leaves this page</span></p>
+          <div class="ps-lane"><div class="ps-node a"><b>This page</b><span>hashes, compares</span></div><div class="ps-node b"><b>Have I Been Pwned</b><span>api.pwnedpasswords.com</span></div><span class="ps-n" id="ps-leak-n"></span></div>
+          <div class="ps-row"><button class="btn p" type="button" id="ps-leak-go" disabled>Check this password</button><p class="ps-res" id="ps-leak-res" aria-live="polite">Type a password at the top first.</p></div>
+          <p class="ps-fine">Those 5 characters go to Have I Been Pwned only when you press the button, and the page asks for a padded answer so its size gives nothing away. Nothing is stored.</p>
+        </div>
+      </section>
+
+      <section class="ps-sec" data-sec="gen" aria-labelledby="ps-h-gen">
+        <h2 id="ps-h-gen" class="ps-rv">Make a better one</h2>
+        <p class="al ps-rv">Random characters, or a passphrase of random words from the EFF list. Every pick comes from the browser’s secure random generator, drawn so that no character is likelier than another.</p>
+        <div class="ps-gen lq ps-rv" data-mode="pw">
+          <div class="ps-seg" role="tablist" aria-label="Kind"><i class="ps-seg-pill"></i><button type="button" role="tab" data-m="pw" class="on" aria-selected="true">Password</button><button type="button" role="tab" data-m="pp" aria-selected="false">Passphrase</button></div>
+          <output class="ps-out" id="ps-out" aria-live="polite"></output>
+          <p class="ps-ent"><b id="ps-bits">—</b> bits of entropy · <span id="ps-blab"></span></p>
+          <label class="ps-range pw-only"><span>Length</span><input type="range" id="ps-len" min="8" max="64" value="20"><b id="ps-lenv">20</b></label>
+          <label class="ps-range pp-only"><span>Words</span><input type="range" id="ps-words" min="3" max="12" value="5"><b id="ps-wordsv">5</b></label>
+          <div class="ps-opts pw-only"><button type="button" class="ps-chip on" data-opt="pw.upper" aria-pressed="true">A–Z</button><button type="button" class="ps-chip on" data-opt="pw.lower" aria-pressed="true">a–z</button><button type="button" class="ps-chip on" data-opt="pw.digits" aria-pressed="true">0–9</button><button type="button" class="ps-chip on" data-opt="pw.symbols" aria-pressed="true">!@#$</button><button type="button" class="ps-chip" data-opt="pw.avoid" aria-pressed="false">No look-alikes (Il1O0o)</button></div>
+          <div class="ps-opts pp-only"><button type="button" class="ps-chip on" data-opt="pp.caps" aria-pressed="true">Capitals</button><button type="button" class="ps-chip on" data-opt="pp.number" aria-pressed="true">A number</button><button type="button" class="ps-chip on" data-opt="pp.sep">Between words: <b>-</b></button></div>
+          <div class="ps-acts"><button class="btn p" type="button" id="ps-regen"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 11-1.6-3.9M13.5 2.5v3h-3"/></svg>New one</button><button class="btn s" type="button" id="ps-copy">Copy</button><button class="btn s" type="button" id="ps-use">Check it above</button></div>
+        </div>
+      </section>
+
+      <section class="ps-sec" data-sec="vault" aria-labelledby="ps-h-vault">
+        <h2 id="ps-h-vault" class="ps-rv">The vault</h2>
+        <p class="al ps-rv">One master password protects everything, and it is never stored. It goes through PBKDF2 with SHA-256, 600,000 times over, to make a 256-bit key; the key seals the vault with AES-GCM. Try the same steps on a note of your own.</p>
+        <div class="ps-vault lq ps-rv">
+          <ol class="ps-steps" aria-hidden="true"><li class="ps-step"><b>Master password</b><span>never stored</span></li><li class="ps-step"><b>PBKDF2-SHA256</b><span>600,000 rounds</span></li><li class="ps-step"><b>256-bit key</b><span>exists only in memory</span></li><li class="ps-step"><b>AES-256-GCM</b><span>sealed, tamper-evident</span></li></ol>
+          <div class="ps-vin">
+            <label class="ps-f2"><span>A note to lock</span><input id="ps-v-note" type="text" maxlength="120" autocomplete="off" spellcheck="false" placeholder="My Wi-Fi password is …"></label>
+            <label class="ps-f2"><span>Master password</span><input id="ps-v-pw" type="password" autocomplete="off" placeholder="Pick one"></label>
+            <button class="btn p" type="button" id="ps-v-lock">Lock it</button>
+          </div>
+          <div class="ps-vout">
+            <dl><div><dt>Salt</dt><dd id="ps-v-salt"></dd></div><div><dt>IV</dt><dd id="ps-v-iv"></dd></div><div><dt>Locked note</dt><dd id="ps-v-ct"></dd></div></dl>
+            <p class="ps-vtime" id="ps-v-time"></p>
+            <div class="ps-vin ps-un"><label class="ps-f2"><span>Unlock with</span><input id="ps-v-upw" type="password" autocomplete="off" placeholder="Master password"></label><button class="btn s" type="button" id="ps-v-open">Unlock</button></div>
+            <p class="ps-vres" id="ps-v-res" aria-live="polite"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="ps-sec" data-sec="codes" aria-labelledby="ps-h-codes">
+        <h2 id="ps-h-codes" class="ps-rv">Verification codes</h2>
+        <p class="al ps-rv">The app keeps 2FA codes next to the password they protect. Each code comes from a secret key and the time (TOTP, RFC 6238) and changes every 30 seconds. This one is live: add the key below to any authenticator app and it will show the same code.</p>
+        <div class="ps-totp lq ps-rv">
+          <div class="ps-ring" aria-hidden="true"><i class="ps-sweep"></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.4-3 8.2-7 9.5-4-1.3-7-5.1-7-9.5V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <div><p class="ps-code" id="ps-code" aria-label="Current code"><span>·</span><span>·</span><span>·</span><span class="g">·</span><span>·</span><span>·</span></p>
+            <p class="ps-key">Demo key <code>JBSW Y3DP EHPK 3PXP</code> · SHA-1 · 6 digits · 30 s</p>
+            <p class="ps-fine">In the app the secret never reaches the window you see; only the current code does.</p></div>
+        </div>
+      </section>
+
+      <section class="ps-sec" data-sec="how" aria-labelledby="ps-h-how">
+        <h2 id="ps-h-how" class="ps-rv">Locked down</h2>
+        <p class="al ps-rv">An app that holds passwords has to assume the worst about everything around it. Each layer below is there for one way things could go wrong.</p>
+        <div class="ps-layers">
+          <div class="ps-layer lq ps-rv"><b>Sandboxed window</b><span>The interface runs with no Node.js and context isolation, and can only call a small, checked set of functions.</span></div>
+          <div class="ps-layer lq ps-rv"><b>No network from the page</b><span>Its Content-Security-Policy allows no outside connections at all; fonts and icons ship with the app.</span></div>
+          <div class="ps-layer lq ps-rv"><b>Secrets stay in the main process</b><span>The key, the decrypted vault and the 2FA secrets live there; the window gets one password at a time, hidden again after 30 s.</span></div>
+          <div class="ps-layer lq ps-rv"><b>Clipboard wiped</b><span>Copying goes straight from the main process to the clipboard, which is cleared after 30 seconds.</span></div>
+          <div class="ps-layer lq ps-rv"><b>Auto-lock</b><span>After inactivity, on sleep, optionally on minimise, and growing delays after wrong master passwords.</span></div>
+          <div class="ps-layer lq ps-rv"><b>Navigation locked</b><span>No leaving the app, no new windows, no camera or notification prompts. Links open in your browser.</span></div>
+        </div>
+        <h2 class="ps-rv">In numbers</h2>
+        <div class="stats">
+          <div class="st lq ps-rv"><b>600,000</b><span>PBKDF2-SHA256 rounds per unlock</span></div>
+          <div class="st lq ps-rv"><b>5 of 40</b><span>hash characters ever sent for a leak check</span></div>
+          <div class="st lq ps-rv"><b>15+</b><span>characters, the NIST minimum it checks for</span></div>
+          <div class="st lq ps-rv"><b>EN + RO</b><span>dictionaries in the strength check</span></div>
+          <div class="st lq ps-rv"><b>7,776</b><span>words to build passphrases from</span></div>
+          <div class="st lq ps-rv"><b>30&nbsp;s</b><span>before a copied password is wiped</span></div>
+        </div>
+        <h2 class="ps-rv">How it got here</h2>
+        <ol class="ps-time">
+          <li class="lq ps-rv"><b>1.0</b><span>A PyQt6 strength checker for the desktop.</span></li>
+          <li class="lq ps-rv"><b>Electron</b><span>Rebuilt to hold passwords: an encrypted vault, a hardened window, tests.</span></li>
+          <li class="lq ps-rv"><b>2.0</b><span>A Mac-style window, 2FA codes, imports from browsers, Recently Deleted.</span></li>
+          <li class="lq ps-rv nx"><b>Next</b><span>A self-hosted sync server that only ever sees encrypted data.</span></li>
+        </ol>
+        <div class="nexts"><a class="btn p" href="https://github.com/Radu-24/Password-Helper" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Code on GitHub</a><button class="btn s" type="button" data-pass="back">Back to projects</button></div>
+      </section>
+    </div>
+    <nav class="ps-dock" aria-label="Parts of this page"><i class="ps-dock-pill" aria-hidden="true"></i><button type="button" data-to="check">Check</button><button type="button" data-to="leak">Leaks</button><button type="button" data-to="gen">Generate</button><button type="button" data-to="vault">Vault</button><button type="button" data-to="codes">Codes</button><button type="button" data-to="how">More</button></nav>
+  </div></section>
   <section class="page p-record" id="pg-record" aria-label="Record"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="rays" aria-hidden="true"></div><div class="wash"></div><div class="pc">
     <h1 class="ttl r"><span class="tt">Record</span><span class="tb" aria-hidden="true">Record</span></h1><p class="lead r">Where I've been and what I picked up along the way.</p>
     <div class="cards r"><article class="card lq"><h3>Siemens Energy</h3><p>Internship, PRAM department, Petrobrazi refinery.</p></article><article class="card lq"><h3>UniTBV · ETTI</h3><p>B.Eng. Telecommunications, Brașov.</p></article><article class="card lq"><h3>Certifications</h3><p>[Add yours, each with a verification link.]</p></article></div>
@@ -1248,6 +1587,7 @@ last = t</pre></div>
 <script src="assets/js/light.js"></script>
 <script src="assets/js/datalink-3d.js"></script>
 <script src="assets/js/themes.js"></script>
+<script src="assets/js/pass-lab.js" defer></script>
 <script src="assets/js/tab-icon.js" defer></script>
 <script>
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1658,7 +1998,7 @@ function collapseIsland(){island.classList.remove('open');setLabel(LBL);return i
 /* refraction maps for every shape the island, the orbs and the back button can take, built while the browser is idle (not in
    the middle of a dive, where building one would hold up a frame) */
 function prepGlass(){if(!GLASS.ok)return;
-  const jobs=[...PAGES.filter(p=>p.id!=='cv').map(p=>p.name),'DataLink Rover','Rover','Controller','Link'].map(n=>()=>{if(TIER.t>1)return;const l=closedLay(n);GLASS.prep(l.w,l.h,l.r)});
+  const jobs=[...PAGES.filter(p=>p.id!=='cv').map(p=>p.name),'DataLink Rover','Rover','Controller','Link','Password Helper'].map(n=>()=>{if(TIER.t>1)return;const l=closedLay(n);GLASS.prep(l.w,l.h,l.r)});
   jobs.push(()=>{if(TIER.t>0||!GEO.beams)return;const l=openLay();GLASS.prep(l.w,l.h,l.r,40)},()=>{if(TIER.t>0)return;const z=GEO.os||60;GLASS.prep(z,z,z/2,24)},()=>{if(TIER.t<=1)GLASS.prep(46,46,23,50)});
   idleEach(jobs,f=>f())}
 
@@ -1759,6 +2099,7 @@ function revealContent(el,skip,{delay=0,gap=70,dur=760}={}){el.classList.remove(
 async function select(i){if(busy||!menuOpen)return;const P=PAGES[i];
   if(P.id===current){closeMenu();return}
   if(current==='dl'&&P.id==='projects'){closeMenu();setTimeout(()=>DL.leave(),reduce?0:260);return}
+  if(current==='pass'&&P.id==='projects'){closeMenu();setTimeout(()=>PASS.leave(),reduce?0:260);return}
   busy=true;SEL=i;clearTimeout(hovT);
   LIGHT.narrow(P.lam);setLabel(P.name);setCap(GEO.mob?`${P.lam} nm`:`λ ${P.lam} nm · monochrome`);
   if(P.id==='cv'){await sleep(560);toast('Your CV download would start here');busy=false;SEL=-1;closeMenu();return}
@@ -2019,7 +2360,7 @@ const DROP=(()=>{const back=$('#back'),drop=$('#drop'),rims=[...drop.querySelect
   /* the menu opens over the button: tuck it away until the menu closes */
   function pause(p){paused=p;if(state!=='on')return;back.style.pointerEvents=p?'none':'';
     back.animate([{opacity:getComputedStyle(back).opacity},{opacity:p?0:1}],{duration:p?160:320,fill:'forwards',easing:EASE}).finished.then(a=>{if(!paused)back.getAnimations().forEach(x=>x.cancel());back.style.opacity=paused?'0':''},()=>{})}
-  back.addEventListener('click',()=>DL.back());
+  back.addEventListener('click',()=>current==='pass'?PASS.back():DL.back());
   /* the button says where it goes; a small hop when that changes */
   function tip(t){back.querySelector('.tip').textContent=t;back.setAttribute('aria-label','Back to '+t)}
   function hop(){if(state==='on'&&!reduce)back.animate([{scale:'1'},{scale:'.86'},{scale:'1'}],{duration:420,easing:'cubic-bezier(.3,.7,.3,1)'})}
@@ -2149,7 +2490,7 @@ const PROJ=(()=>{const pp=$('#pg-projects'),dl=$('#pg-dl'),card=$('#pj-rover'),c
     w.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||reduce||busy||!LYR.on(card))return;ex=e.clientX;ey=e.clientY;if(rf)return;
       rf=requestAnimationFrame(()=>{rf=0;const r=w.getBoundingClientRect(),d=D();if(d)d.cardHover(true,((ex-r.left)/r.width-.5)*2,((ey-r.top)/r.height-.5)*2)})});
     w.addEventListener('pointerleave',()=>{const d=D();if(d)d.cardHover(false)})}
-  function left(o,n){if(o===dl)DL.reset()}
+  function left(o,n){if(o===dl)DL.reset();if(o.id==='pg-pass')PASS.reset()}
   return{load,prep,left,vis}})();
 
 /* ---------- the link diagram: the real system, step by step ----------
@@ -2268,6 +2609,13 @@ const NETD=(()=>{const root=$('#dl-net'),box=root.querySelector('.net-in'),svg=b
 /* ---------- DataLink Rover: the pick screen, the three stories, and the way back ----------
    Levels: Projects -> DataLink (pick the controller, the link or the rover) -> one story.
    The back button (and Esc) always goes one level up: from a story to the pick screen, from the pick screen to Projects. */
+/* shared by the project pages' transitions: wait for the new page's first frame; a copy of a title, fixed on screen above
+   both pages, that can travel between them */
+const frames2=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+function ghost(src,r){const g=src.cloneNode(true),s=getComputedStyle(src);g.removeAttribute('id');g.className='ghost';g.setAttribute('aria-hidden','true');
+  Object.assign(g.style,{position:'fixed',left:r.left+'px',top:r.top+'px',margin:'0',padding:'0',border:'0',background:'none',boxShadow:'none',zIndex:'21',pointerEvents:'none',transformOrigin:'0 0',
+    whiteSpace:'nowrap',fontFamily:s.fontFamily,fontSize:s.fontSize,fontWeight:s.fontWeight,letterSpacing:s.letterSpacing,lineHeight:s.lineHeight,color:s.color,willChange:'transform'});
+  document.body.appendChild(g);return g}
 const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),cslot=$('#rv-slot-card'),slot=$('#dl-slot'),sel=$('#dl-sel'),tags=$('#dl-tags'),hud=$('#dl-hud');
   const picks=[...sel.querySelectorAll('.pick')],selT=sel.querySelector('.sel-t'),NAME={rover:'Rover',remote:'Controller',link:'Link'};
   const OPEN=mkSpring(.92,1.0),SHUT=mkSpring(.96,1.3),EIO='cubic-bezier(.65,0,.35,1)';
@@ -2386,12 +2734,6 @@ const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),c
      transform animate (the compositor plays them); glass blur is paused (hush) and the 3D view draws at 1x while it moves.
      The 3D camera follows the clock of the same animation, so the model and the page always land together. */
   const fly=$('#dl-fly');
-  const frames2=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-  /* a copy of a title, fixed on screen above both pages, that can travel between them */
-  function ghost(src,r){const g=src.cloneNode(true),s=getComputedStyle(src);g.removeAttribute('id');g.className='ghost';g.setAttribute('aria-hidden','true');
-    Object.assign(g.style,{position:'fixed',left:r.left+'px',top:r.top+'px',margin:'0',padding:'0',zIndex:'21',pointerEvents:'none',transformOrigin:'0 0',
-      whiteSpace:'nowrap',fontFamily:s.fontFamily,fontSize:s.fontSize,fontWeight:s.fontWeight,letterSpacing:s.letterSpacing,lineHeight:s.lineHeight,color:s.color,willChange:'transform'});
-    document.body.appendChild(g);return g}
   const clockOf=a=>()=>!a.v?0:a.v.playState==='idle'?null:a.v.currentTime;
   async function enter(){if(busy||menuOpen||current!=='projects')return;busy=true;
     const o=pp,n=page,Z=SPR.zoom,Dur=reduce?1:Z.ms,cT=card.querySelector('.pj-t');saved=o.scrollTop;
@@ -2474,6 +2816,77 @@ const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),c
   function reset(){setMode('select');page.scrollTop=0;setHot(null);card.style.opacity='';card.querySelector('.pj-t').style.visibility='';pp.style.transform='';DROP.hide()}
   if(window.DL3D)DL3D.onFrame(place);
   return{enter,leave,pick,unpick,back,reset,get mode(){return mode},get level(){return current!=='dl'?0:mode==='select'?1:2}}})();
+
+/* ---------- the Password Helper page ----------
+   Projects -> the page, in the rover page's manner but its own: the list fades back and the page fades in behind it, the
+   title glides from the list to its place, and the card's little password field flies up and grows into the page's field
+   (a plain glass copy; the real field takes over as it lands). Back (the drop, the menu, Escape) plays it the other way.
+   What the page does lives in assets/js/pass-lab.js, wired up the first time the page opens; nothing typed there outlives
+   the visit. */
+const PASS=(()=>{const page=$('#pg-pass'),pp=$('#pg-projects'),go=$('#pj-pass'),item=go.closest('.ly'),win=item.querySelector('.ly-w'),name=item.querySelector('.ly-n'),
+    title=page.querySelector('.ps-t'),field=page.querySelector('.ps-field'),rest=[...page.querySelectorAll('.ps-k,.ps-s,.ps-meter,.ps-verdict,.ps-try,.ps-grid')];
+  let saved=0,wired=false;
+  const L=()=>window.PHLAB;
+  function wire(){if(wired||!L())return;wired=true;L().attach(page,{reduce,glass:(el,o)=>LQ.watch(el,o),toast,active:()=>current==='pass'&&!busy,back:()=>back()})}
+  /* the card's field as a plain glass shape; it is outside the pages and has nothing inside, so its size can animate */
+  function shape(r,rad){const g=document.createElement('div');g.className='ps-fly';g.setAttribute('aria-hidden','true');
+    Object.assign(g.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',borderRadius:rad+'px'});document.body.appendChild(g);return g}
+  const box=(r,rad)=>({left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',borderRadius:rad+'px'});
+  const glide=(a,b,k)=>`translate(${(b.left-a.left).toFixed(1)}px,${(b.top-a.top).toFixed(1)}px) scale(${k.toFixed(4)})`;
+  async function enter(){if(busy||menuOpen||current!=='projects')return;if(!L()){toast('One moment…');return}busy=true;wire();
+    const o=pp,n=page,Z=SPR.zoom,Dur=reduce?1:Z.ms;saved=o.scrollTop;
+    n.style.zIndex=3;n.scrollTop=0;n.style.opacity='0';n.classList.add('warm');L().open(TIER.t);
+    TH.page('pass');LBL='Password Helper';setLabel(LBL);islandTo(closedLay(),{spr:SPR.size});DROP.tip('Projects');
+    if(reduce){n.style.opacity='';n.classList.add('active');n.classList.remove('warm');n.style.zIndex='';o.classList.remove('active');current='pass';root.classList.add('ps-on');busy=false;L().shown(false);DROP.show();return}
+    root.classList.add('hush');
+    await frames2();                                   // the page lays out (invisible) before anything is measured
+    const fl=win.querySelector('.fld'),fa=fl.getBoundingClientRect(),fb=field.getBoundingClientRect(),ta=name.getBoundingClientRect(),tb=title.getBoundingClientRect(),
+      k=parseFloat(getComputedStyle(title).fontSize)/parseFloat(getComputedStyle(name).fontSize);
+    const g=ghost(name,ta),f=shape(fa,12);name.style.visibility=fl.style.visibility=title.style.visibility='hidden';
+    const opt={duration:Dur,easing:Z.e,fill:'both'},soft='cubic-bezier(.4,0,.2,1)';
+    const clk=g.animate([{transform:'none'},{transform:glide(ta,tb,k)}],opt);
+    f.animate([box(fa,12),box(fb,fb.height/2)],opt);
+    f.animate([{opacity:1},{opacity:1,offset:.78},{opacity:0}],{duration:Dur,fill:'both'});
+    field.animate([{opacity:0},{opacity:0,offset:.72},{opacity:1}],{duration:Dur,fill:'both'});
+    rest.forEach((el,i)=>el.animate([{opacity:0,translate:'0 18px'},{opacity:1,translate:'0 0'}],{duration:560,delay:Dur*.42+i*70,easing:SOFT,fill:'backwards'}));
+    o.style.transformOrigin=n.style.transformOrigin='50% 50%';   // pages are viewport-sized scroll boxes
+    o.animate([{opacity:1,transform:'none'},{opacity:0,transform:'scale(.965)'}],{duration:Dur*.55,easing:soft,fill:'both'});
+    n.animate([{opacity:0,transform:'scale(1.03)'},{opacity:1,transform:'none'}],{duration:Dur*.75,delay:Dur*.12,easing:soft,fill:'both'});n.style.opacity='';
+    await clk.finished.catch(()=>{});
+    name.style.visibility=fl.style.visibility=title.style.visibility='';g.remove();f.remove();field.getAnimations().forEach(a=>a.cancel());
+    [o,n].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());Object.assign(el.style,{transform:'',transformOrigin:'',zIndex:'',opacity:''})});
+    root.classList.remove('hush');o.classList.remove('active');n.classList.remove('warm');n.classList.add('active');current='pass';root.classList.add('ps-on');busy=false;
+    L().shown(!TOUCH);sleep(90).then(()=>{if(current==='pass'&&!busy)DROP.show()})}
+  /* the page -> Projects; from the top of the page the title and the field fly back into the card, from further down the
+     page simply hands over to the list */
+  async function leave(){if(busy||menuOpen||current!=='pass')return;busy=true;
+    const o=page,n=pp,Z=SPR.unzoom,Dur=reduce?1:Z.ms,atTop=o.scrollTop<60;
+    DROP.hide();TH.page('projects');root.classList.remove('ps-on');LBL='Projects';setLabel(LBL);islandTo(closedLay(),{spr:SPR.size});
+    n.style.zIndex=1;n.style.opacity='0';n.classList.add('warm');n.scrollTop=saved;o.style.zIndex=3;
+    if(reduce){n.style.opacity='';o.classList.remove('active');n.classList.add('active');n.classList.remove('warm');n.style.zIndex=o.style.zIndex='';current='projects';reset();busy=false;return}
+    root.classList.add('hush');
+    await frames2();                                   // the list lays out (invisible) behind this page first
+    const opt={duration:Dur,easing:Z.e,fill:'both'},soft='cubic-bezier(.4,0,.2,1)',fl=win.querySelector('.fld');let g=null,f=null;
+    if(atTop){const fa=field.getBoundingClientRect(),fb=fl.getBoundingClientRect(),ta=title.getBoundingClientRect(),tb=name.getBoundingClientRect(),
+        k=parseFloat(getComputedStyle(name).fontSize)/parseFloat(getComputedStyle(title).fontSize);
+      g=ghost(title,ta);f=shape(fa,fa.height/2);title.style.visibility=name.style.visibility=fl.style.visibility='hidden';field.style.opacity='0';
+      g.animate([{transform:'none'},{transform:glide(ta,tb,k)}],opt);f.animate([box(fa,fa.height/2),box(fb,12)],opt)}
+    o.animate([{opacity:1,transform:'none'},{opacity:0,transform:'scale(1.03)'}],{duration:Dur*.6,delay:Dur*.08,easing:soft,fill:'both'});
+    n.animate([{opacity:0},{opacity:1}],{duration:Dur*.7,delay:Dur*.22,easing:soft,fill:'both'});n.style.opacity='';
+    const clk=n.animate([{transform:'scale(.965)'},{transform:'none'}],opt);
+    await clk.finished.catch(()=>{});
+    title.style.visibility=name.style.visibility=fl.style.visibility='';field.style.opacity='';if(g)g.remove();if(f)f.remove();
+    [o,n].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());Object.assign(el.style,{transform:'',transformOrigin:'',zIndex:'',opacity:''})});
+    root.classList.remove('hush');o.classList.remove('active');n.classList.remove('warm');n.classList.add('active');current='projects';reset();busy=false;go.focus({preventScroll:true,focusVisible:false})}
+  const back=()=>leave();
+  /* left (by the back or by the menu): empty everything, put the field and the title back */
+  function reset(){if(L())L().reset();DROP.hide();root.classList.remove('ps-on');title.style.visibility=name.style.visibility='';field.style.opacity=''}
+  /* the way in: the button, or the card's window, once the project is the one in focus */
+  [go,win].forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();if(LYR.on(el))enter();else LYR.go(el)}));
+  addEventListener('keydown',e=>{if(current!=='pass'||menuOpen||busy||e.key!=='Escape')return;
+    if(e.target.matches&&e.target.matches('input')&&e.target.value)return;   // Escape in a field with text in it belongs to the field
+    e.preventDefault();back()});
+  return{enter,leave,back,reset}})();
 
 /* ---------- ambient light: the textures and particles of .abg (see its CSS) ----------
    Each page's layer is filled once: three pools (the page's colour, its neighbour in the spectrum, the season's tint) and

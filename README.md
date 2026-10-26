@@ -1,18 +1,31 @@
 # Radu Matei
 
-My personal website: who I am, what I have built, and my thesis robot, the DataLink Rover, which you can take apart in 3D.
+My personal website: who I am, what I have built, my thesis robot, the DataLink Rover, which you can take apart in 3D, and Password Helper, whose checker you can try right on its page.
 
 ![The home page](docs/home.jpg)
 
 ## What it is
 
-- One page with six sections: Home, Projects, DataLink Rover, Record, About and Contact. The menu is a glass prism at the top of the screen.
+- One page with seven sections: Home, Projects, DataLink Rover, Password Helper, Record, About and Contact. The menu is a glass prism at the top of the screen. The two project pages open from their entries on Projects.
 - Plain HTML, CSS and JavaScript. There is no framework and no build step for the site itself.
 - The light in the background is drawn by `light.js` in a Web Worker, so it stays smooth while the page is busy. Browsers without workers or OffscreenCanvas draw it on the main thread instead.
 - The rover and its controller are real 3D models (three.js). The rover is built part by part to real dimensions, and the controller comes from its CAD file. The page loads light versions first. On devices that can handle more, it swaps in detailed versions, and it switches back if the frame rate drops.
 - Every page has a moving background of soft light (`.abg` in `index.html`), except a project's own page, which has a background made for it. Pools in the page's colour drift behind the content, plus one motion per page. Home has a band of spectrum, Projects has a beam of light scanning a dot grid, Record has rays, About has aurora ribbons and Contact has signal rings. The shapes are small canvases that the graphics card stretches and moves, so the page does no work while they animate. Weaker devices keep the still background.
 - The first time the page loads, the name fades in on black and glides into place, then the page comes in piece by piece. It plays on every page load and stores nothing.
 - The look follows the time of year (see below).
+
+## The Password Helper page
+
+[Password Helper](https://github.com/Radu-24/Password-Helper) is my desktop password manager. Its page opens from Projects: the title glides off the list, and the card's little password field grows into the page's own. The parts of the app work right on the page (`site/assets/js/pass-lab.js`):
+
+- **The checker.** A strength estimate as you type, with a meter, the three checks the app uses (from NIST SP 800-63B-4: at least 15 characters, hard to guess, not in known breaches), the time to crack for four kinds of attack, and the patterns an attacker would try first. The app uses zxcvbn-ts with full English and Romanian dictionaries (about 8 MB). The page uses the same method with small built-in word lists, so its scores are close to the app's but not identical.
+- **The leak check.** It shows k-anonymity at work. The page hashes the password with SHA-1, sends only the first 5 of its 40 characters to [Have I Been Pwned](https://haveibeenpwned.com/Passwords), and compares the answer on the page. It runs only when the visitor presses the button. It asks for a padded answer (`Add-Padding`); if a browser won't send that header, it asks without it.
+- **The generator.** Passwords and passphrases, with the same rules as the app: the browser's secure random generator, with rejection sampling so no character is likelier than another. Passphrases use the EFF Large Wordlist (`site/assets/js/eff-wordlist.js`), which loads only when a passphrase is asked for.
+- **The vault.** A visitor can lock a note of their own with the vault's real steps (PBKDF2-SHA256 with 600,000 rounds, then AES-256-GCM in the browser's Web Crypto), then unlock it again or watch a wrong password fail.
+- **Verification codes.** A live TOTP code (RFC 6238) from a public demo key. It matches what any authenticator app shows for that key.
+- Then the security model, a few numbers and the app's story, and a glass dock at the bottom that follows the part in view.
+
+Nothing is stored. Everything typed on the page is emptied when the visitor leaves it. The background is the app's matrix rain, redrawn as falling hashes in the page's colour: a few strips drawn once and moved by the graphics card.
 
 ## The time of year
 
@@ -53,7 +66,8 @@ site/                    the website; this folder is what gets published
 ├── sitemap.xml          the site's address for search engines (radumatei.ro)
 ├── favicon.ico          tab icon for browsers and crawlers that ask for /favicon.ico
 └── assets/
-    ├── js/              light.js (background light), datalink-3d.js (3D viewer), themes.js (time of year), tab-icon.js (animated tab icon)
+    ├── js/              light.js (background light), datalink-3d.js (3D viewer), pass-lab.js (Password Helper page),
+    │                    eff-wordlist.js (its passphrase words), themes.js (time of year), tab-icon.js (animated tab icon)
     ├── models/          packed 3D models and their texture, built by tools/
     ├── vendor/three/    three.js 0.160.0, served from the site
     ├── css/fonts.css    the two fonts, embedded, served from the site
@@ -110,7 +124,10 @@ The site contains no passwords, keys or private addresses.
 ## Privacy
 
 The site sets no cookies and has no analytics or tracking. Fonts and three.js are part of the site, so a visitor's browser
-contacts only the host. GitHub Pages keeps its own server logs, including IP addresses. The home page footer says the same.
+contacts only the host. The one exception is the leak check on the Password Helper page. When a visitor presses its button, the first 5
+characters of the password's SHA-1 hash go to Have I Been Pwned (`api.pwnedpasswords.com`, served through Cloudflare), which sees that
+request like any website would. The password itself never leaves the page. GitHub Pages keeps its own server logs, including IP
+addresses. The home page footer says the same.
 
 A static site cannot keep a secret. Every visitor downloads everything in `site/`, so never put a key or password there. If the tools ever need one, put it in a `.env` file. `.gitignore` keeps `.env` files and the Python `.venv` folder out of the repository.
 
@@ -119,5 +136,7 @@ A static site cannot keep a secret. Every visitor downloads everything in `site/
 - [three.js](https://threejs.org/) 0.160.0 (MIT licence), in `site/assets/vendor/three/` (licence included).
 - Instrument Sans and IBM Plex Mono (SIL Open Font License), embedded in `site/assets/css/fonts.css` (licences in `site/assets/fonts/`).
 - DejaVu Sans for the labels painted into the 3D textures, in `tools/fonts/` (licence included).
+- The [EFF Large Wordlist](https://www.eff.org/dice) for passphrases (CC BY 3.0 US), in `site/assets/js/eff-wordlist.js`.
+- The strength estimate follows the method of [zxcvbn](https://github.com/dropbox/zxcvbn) (MIT). Leak checks use the [Pwned Passwords](https://haveibeenpwned.com/Passwords) range API by Have I Been Pwned.
 
 © 2026 Radu Matei. All rights reserved.

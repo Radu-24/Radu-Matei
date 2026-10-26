@@ -235,7 +235,7 @@
   const CSS = `
 #deco{position:fixed;inset:0;z-index:21;pointer-events:none;overflow:hidden;contain:strict;opacity:0;transition:opacity 1.1s}
 #deco.on{opacity:1}
-[data-pg=dl] #deco{opacity:0;transition-duration:.45s}
+[data-pg=dl] #deco,[data-pg=pass] #deco{opacity:0;transition-duration:.45s}
 #deco>*,.dks>*{position:absolute;display:block;pointer-events:none}
 .dks{position:absolute;inset:0;width:100%;height:100%}
 #deco i,.dks i,.ideco i,#dburst i{display:block}
@@ -243,7 +243,7 @@
 .dk-web,.dk-mrt,.dk-br,.dk-moon,.dk-pk,.dk-fir,.dk-nest,.dk-drops,.dk-pile,.dk-palm,.dk-sun,.dk-rays,.dk-wire,.dk-bunt,.dk-ice,.dk-hills,.dk-fw{background:var(--img) no-repeat center/100% 100%}
 /* Everything is hidden with opacity, never visibility or display: an animation that starts on an element that is not
    visible is left to the main thread, which would then wake up every frame. */
-.mo #deco *,.hush #deco *,.t2 #deco *,.t2 .dks *,.mo .ideco *,.hush .ideco *,.t2 .ideco *,[data-pg=dl] #deco *{animation-play-state:paused!important}
+.mo #deco *,.hush #deco *,.t2 #deco *,.t2 .dks *,.mo .ideco *,.hush .ideco *,.t2 .ideco *,[data-pg=dl] #deco *,[data-pg=pass] #deco *{animation-play-state:paused!important}
 .t2 .fly{display:none!important}
 @keyframes dkSway{from{rotate:calc(var(--a,3deg)*-1)}to{rotate:var(--a,3deg)}}
 @keyframes dkBob{from{translate:0 0}to{translate:0 var(--b,8px)}}
@@ -404,13 +404,14 @@
 
   /* hidden before the first reveal, while the menu is open and on a project's own page; they come back once the island has
      closed again */
-  function sync(later) { clearTimeout(st); const off = !shown || open || pg === 'dl';
+  const OWN = new Set(['dl', 'pass']);   // a project's own page keeps its own look
+  function sync(later) { clearTimeout(st); const off = !shown || open || OWN.has(pg);
     const go = () => [front, backL].forEach(c => { if (c) c.classList.toggle('off', off) });
     if (off || !later) go(); else st = setTimeout(go, later) }
   function reveal(ms) { if (!th) return; setTimeout(() => { shown = true; deco.classList.add('on'); lit(); sync() }, ms || 0) }
-  function page(id) { pg = id; root.dataset.pg = id; if (th) sync(id === 'dl' ? 0 : 500) }
+  function page(id) { pg = id; root.dataset.pg = id; if (th) sync(OWN.has(id) ? 0 : 500) }
   function tier(t) { tierT = t }
-  function menu(on, l) { if (!th) return; open = on; sync(on ? 0 : 420); if (on && shown && pg !== 'dl') { clearTimeout(bt); bt = setTimeout(() => burst(l || {w: 300, h: 160}), 110) } }
+  function menu(on, l) { if (!th) return; open = on; sync(on ? 0 : 420); if (on && shown && !OWN.has(pg)) { clearTimeout(bt); bt = setTimeout(() => burst(l || {w: 300, h: 160}), 110) } }
 
   /* the scene behind a page's content */
   function back(box) { if (!th) return; const sc = mk('dks'); th.scene(sc); if (sc.children.length) box.appendChild(sc) }
