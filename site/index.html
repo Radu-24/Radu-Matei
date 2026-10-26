@@ -73,6 +73,100 @@ button{font:inherit;color:inherit}
   background:radial-gradient(closest-side,color-mix(in srgb,color-mix(in srgb,var(--pc) 55%,#3b2bff) 42%,transparent) 0%,color-mix(in srgb,color-mix(in srgb,var(--pc) 55%,#3b2bff) 28%,transparent) 40%,transparent 100%)}
 .wash{position:absolute;inset:0;opacity:0;pointer-events:none}
 .pc{position:relative;max-width:1100px;margin:0 auto;padding:22vh 24px 18vh;min-height:calc(100% + 40vh)}   /* always enough scroll for the title to leave */
+
+/* ---------- ambient light: the moving background of every page that is not a project ----------
+   Soft pools of light in the page's colour and its neighbour in the spectrum drift behind the content, plus one signature
+   motion per page (data-abg): a band of spectrum on Home, a scanning beam over a dot grid on Projects, rays on Record,
+   aurora ribbons on About, signal rings on Contact. (A project's own page has its own background, not this one.)
+   A new page gets the pools alone (or one of the motions) by adding <div class="abg" data-abg="…"> after its .pbg.
+   Every shape is a small canvas (a few hundred pixels) that the GPU stretches to size and the compositor moves: nothing is
+   repainted and no script runs per frame, and all of it together is about a megabyte of GPU memory. The layer is sticky and
+   screen-sized at the top of the page, so it stays put while the page scrolls and still zooms with the page in a dive.
+   The time of year (SEASON) tints one of the pools and adds a few drifting particles; its pictures (the moon and bats,
+   snowy hills, palms...) are added here too, by assets/js/themes.js, which also dresses the screen's edges and the island.
+   It pauses while its page is not shown, during page transitions and under the menu. The lite tiers keep only the static
+   pools of .pbg and a few particles; with reduced motion it all stands still. */
+.abg{position:sticky;top:0;height:100vh;margin-bottom:-100vh;overflow:hidden;pointer-events:none;contain:strict}
+.abg>*{position:absolute;left:0;top:0;display:block;pointer-events:none}
+.t2 .abg>canvas{display:none}
+.page:not(.active) .abg *,.hush .abg *,.mo .abg *{animation-play-state:paused}
+/* pools: centred at (cx, cy) by translating a box of size w by (cx - w/2, cy - w/2); they drift between two such points */
+.ab-p{width:var(--w);height:var(--w);opacity:var(--o,.85);animation:abDrift var(--t) ease-in-out var(--dl,0s) infinite alternate both}
+@keyframes abDrift{from{transform:translate3d(calc(var(--x0) - var(--w)/2),calc(var(--y0) - var(--w)/2),0) scale(var(--s0,1))}
+  to{transform:translate3d(calc(var(--x1) - var(--w)/2),calc(var(--y1) - var(--w)/2),0) scale(var(--s1,1.15))}}
+.abg .p1{--w:92vmax;--x0:16vw;--y0:14vh;--x1:30vw;--y1:30vh;--t:31s}
+.abg .p2{--w:84vmax;--x0:88vw;--y0:88vh;--x1:68vw;--y1:72vh;--s0:1.1;--s1:.9;--t:39s;--dl:-12s;--o:.7}
+.abg .p3{--w:66vmax;--x0:78vw;--y0:20vh;--x1:56vw;--y1:44vh;--s1:1.25;--t:47s;--dl:-20s;--o:.55}   /* the season's tint */
+/* Home: a band of spectrum, the light out of the prism, crossing the screen and turning slowly */
+.ab-band{width:190vmax;height:30vmax;opacity:.14;--b0:.08;--b1:.17;animation:abBand 44s ease-in-out infinite alternate,abBreath 13s ease-in-out infinite alternate}
+@keyframes abBand{from{transform:translate3d(calc(50vw - 95vmax - 10vmax),calc(56vh - 15vmax),0) rotate(-26deg)}to{transform:translate3d(calc(50vw - 95vmax + 10vmax),calc(48vh - 15vmax),0) rotate(-18deg)}}
+@keyframes abBreath{from{opacity:var(--b0,.26)}to{opacity:var(--b1,.5)}}
+[data-abg=spectrum] .p3{--x0:70vw;--y0:78vh;--x1:52vw;--y1:62vh}
+/* Record: rays fanning out from the top left corner, swinging a few degrees */
+.ab-rays{width:150vmax;height:150vmax;transform-origin:0 0;--b0:.32;--b1:.6;animation:abRays 32s ease-in-out infinite alternate,abBreath 11s ease-in-out infinite alternate}
+@keyframes abRays{from{transform:translate3d(-8vmax,-10vmax,0) rotate(-5deg)}to{transform:translate3d(-8vmax,-10vmax,0) rotate(4deg)}}
+[data-abg=rays] .p1{--x0:4vw;--y0:2vh;--x1:14vw;--y1:10vh;--w:80vmax}
+[data-abg=rays] .p3{--x0:20vw;--y0:84vh;--x1:36vw;--y1:70vh}
+/* About: two aurora ribbons rising from the bottom, swaying and stretching */
+.ab-wave{width:150vw;height:56vh;--b0:.35;--b1:.7;animation:abWave var(--t) ease-in-out var(--dl,0s) infinite alternate,abBreath var(--tb) ease-in-out infinite alternate}
+@keyframes abWave{from{transform:translate3d(var(--x0),var(--y0),0) skewY(var(--k0)) scaleY(var(--s0))}to{transform:translate3d(var(--x1),var(--y1),0) skewY(var(--k1)) scaleY(var(--s1))}}
+.ab-wave.w1{--x0:-34vw;--x1:-12vw;--y0:44vh;--y1:36vh;--k0:-5deg;--k1:3deg;--s0:.85;--s1:1.15;--t:27s;--tb:9s}
+.ab-wave.w2{--x0:-6vw;--x1:-26vw;--y0:52vh;--y1:44vh;--k0:4deg;--k1:-4deg;--s0:1.1;--s1:.8;--t:35s;--tb:12s;--dl:-9s}
+[data-abg=waves] .p1{--x0:30vw;--y0:84vh;--x1:44vw;--y1:72vh}
+[data-abg=waves] .p2{--x0:84vw;--y0:20vh;--x1:66vw;--y1:32vh}
+/* Contact: signal rings spreading out and fading, three at a time, like a channel opening */
+.ab-ring{width:72vmax;height:72vmax;opacity:0;animation:abRing 10.5s cubic-bezier(.2,.6,.4,1) var(--dl) infinite}
+@keyframes abRing{0%{opacity:0;transform:translate3d(calc(var(--cx) - 36vmax),calc(var(--cy) - 36vmax),0) scale(.1)}12%{opacity:.75}
+  100%{opacity:0;transform:translate3d(calc(var(--cx) - 36vmax),calc(var(--cy) - 36vmax),0) scale(1.5)}}
+[data-abg=rings]{--cx:82vw;--cy:74vh}
+.ab-ring.r1{--dl:0s}.ab-ring.r2{--dl:-3.5s}.ab-ring.r3{--dl:-7s}
+@media (max-width:760px){[data-abg=rings]{--cx:70vw;--cy:82vh}}
+[data-abg=rings] .p1{--x0:80vw;--y0:72vh;--x1:66vw;--y1:60vh}
+[data-abg=rings] .p2{--x0:12vw;--y0:16vh;--x1:26vw;--y1:28vh}
+/* Projects: the workbench, a faint dot grid (painted once, it never moves), and now and then a soft beam of light sweeping
+   across it like a scanner; it rests off screen for a while between passes */
+.abg>.ab-grid{inset:0;width:100%;height:100%;opacity:.12;background:radial-gradient(color-mix(in srgb,var(--pc) 45%,#fff) 1px,transparent 1.6px) 0 0/26px 26px;
+  -webkit-mask-image:radial-gradient(90% 80% at 50% 38%,#000,transparent);mask-image:radial-gradient(90% 80% at 50% 38%,#000,transparent)}
+.ab-scan{width:48vw;height:150vh;opacity:.42;animation:abScan 24s cubic-bezier(.45,0,.55,1) -6s infinite}
+@keyframes abScan{0%{transform:translate3d(-62vw,-25vh,0) rotate(14deg)}72%,100%{transform:translate3d(118vw,-25vh,0) rotate(14deg)}}
+[data-abg=scan] .p1{--x0:12vw;--y0:12vh;--x1:26vw;--y1:24vh}
+[data-abg=scan] .p2{--x0:90vw;--y0:78vh;--x1:72vw;--y1:64vh;--o:.6}
+/* the season's particles: a falling (or rising, or twinkling) box, and inside it the particle swaying and turning */
+.sfx{position:absolute;inset:0;width:100%;height:100%}
+.sfx i{position:absolute;left:var(--x);top:0;will-change:transform;animation:fxFall var(--d) linear var(--dl) infinite}
+.sfx b{display:block;width:var(--z);height:var(--z);opacity:var(--o);border-radius:50%;background:var(--c);animation:fxSway var(--sd) ease-in-out var(--dl) infinite alternate}
+@keyframes fxFall{from{transform:translate3d(0,-6vh,0)}to{transform:translate3d(0,106vh,0)}}
+@keyframes fxRise{from{transform:translate3d(0,104vh,0)}to{transform:translate3d(0,-6vh,0)}}
+@keyframes fxSway{from{transform:translate3d(calc(var(--sw)*-1),0,0) rotate(calc(var(--r)*-1))}to{transform:translate3d(var(--sw),0,0) rotate(var(--r))}}
+@keyframes fxFlick{0%,100%{opacity:var(--o)}50%{opacity:calc(var(--o)*.35)}}
+@keyframes fxTw{0%,100%{opacity:0;transform:scale(.3)}50%{opacity:var(--o);transform:scale(1)}}
+.sfx[data-fx=snow] b{background:radial-gradient(circle,#fff 0,rgba(255,255,255,.8) 32%,rgba(255,255,255,0) 70%)}
+.sfx[data-fx=ember] i,.sfx[data-fx=mote] i{animation-name:fxRise}
+.sfx[data-fx=ember] b{background:radial-gradient(circle,#FFF4E0 0,#FFD08A 22%,var(--c) 48%,rgba(255,122,26,0) 74%);box-shadow:0 0 9px 1px color-mix(in srgb,var(--c) 55%,transparent);
+  animation:fxSway var(--sd) ease-in-out var(--dl) infinite alternate,fxFlick 1.7s ease-in-out var(--dl) infinite}
+.sfx[data-fx=mote] b{background:radial-gradient(circle,#FFF6DA 0,var(--c) 35%,transparent 72%);box-shadow:0 0 8px color-mix(in srgb,var(--c) 45%,transparent)}
+.sfx[data-fx=spark] i{top:var(--y);animation:none}
+.sfx[data-fx=spark] b{background:radial-gradient(circle,#fff 0,var(--c) 30%,transparent 70%);animation:fxTw var(--d) ease-in-out var(--dl) infinite}
+.sfx[data-fx=confetti] b{width:calc(var(--z)*.55);border-radius:1.5px}
+.sfx[data-fx=petal] b{border-radius:70% 0 70% 0;background:linear-gradient(135deg,var(--c),rgba(255,255,255,.85))}
+.sfx[data-fx=leaf] b{border-radius:0 80% 0 80%;background:linear-gradient(135deg,var(--c),#6b2a0e)}
+.sfx[data-fx=martisor] b{background:radial-gradient(circle,var(--c) 0,var(--c) 34%,transparent 70%)}
+/* a small chip under the name on the home page */
+.hmeta{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 0}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 12px;border-radius:999px;font-size:13.5px;font-weight:500;color:#D5D9E4;
+  background:radial-gradient(120% 160% at 28% -20%,rgba(255,255,255,.14),transparent 60%),rgba(255,255,255,.05);
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.42),inset -1px -1px 0 rgba(255,255,255,.12),inset 0 0 0 1px rgba(255,255,255,.05)}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--cc,var(--pc));box-shadow:0 0 10px var(--cc,var(--pc))}
+
+/* ---------- the first look, once per page load (nothing is stored) ----------
+   The name fades in on black over a thin line of spectrum; then the black lifts, the name glides into its place as the title
+   and the page comes in piece by piece. The curtain lifts on its own after 7 s if the script never gets to run. */
+#intro{position:fixed;inset:0;z-index:90;background:#000;animation:inSafe .6s 7s both}
+@keyframes inSafe{to{opacity:0;visibility:hidden}}
+#intro .in-line{position:absolute;left:50%;top:50%;width:min(440px,62vw);height:2px;border-radius:2px;transform:translateX(-50%) scaleX(0);
+  background:linear-gradient(90deg,transparent,#FF5A6A 12%,#FF9F43 28%,#FFE14D 44%,#5CF59A 58%,#4DC8FF 74%,#9B7BFF 88%,transparent)}
+.in-ghost{position:fixed;z-index:91;margin:0;padding:0;pointer-events:none;will-change:transform,opacity}
+@media (prefers-reduced-motion:reduce){#intro{display:none}.abg>canvas{display:none}}   /* still: the static pools of .pbg, as on the lite tiers */
 /* big page title: drifts up, blurs and fades out as the page scrolls.
    The blur is a pre-blurred copy cross-faded in (opacity only), so the GPU never re-blurs per frame. */
 .page h1{margin:0;font-size:clamp(64px,15vw,210px);font-weight:700;letter-spacing:-.055em;line-height:.86;text-wrap:balance}
@@ -191,24 +285,10 @@ button{font:inherit;color:inherit}
 @media (max-width:419px){.orb{--os:48px}.ol{font-size:11px}}
 
 /* ================= HOME ================= */
-/* texture: faint light ripples (caustics, drawn once at load) and fine film grain; a soft light follows the cursor.
-   Nothing moves on its own, so the GPU idles when nobody is scrolling or pointing. */
+/* texture: fine film grain over the ambient light (.abg, data-abg=spectrum), and a soft light that follows the cursor */
 .hbg{position:absolute;left:0;right:0;top:-10vh;bottom:-10vh;pointer-events:none;overflow:hidden;
-  -webkit-mask-image:linear-gradient(#000 calc(100% - 45vh),transparent);mask-image:linear-gradient(#000 calc(100% - 45vh),transparent)}   /* the colour pools fade out before the page ends */
+  -webkit-mask-image:linear-gradient(#000 calc(100% - 45vh),transparent);mask-image:linear-gradient(#000 calc(100% - 45vh),transparent)}   /* the grain fades out before the page ends */
 .hbg i{position:absolute;inset:0;display:block}
-.hb-field{position:absolute;inset:0}
-/* three soft colour pools (pre-blurred gradients, never a live blur filter); they drift slowly only on the full tier */
-.hb-field i{position:absolute;width:70vmax;height:70vmax;border-radius:50%;will-change:transform}
-.hb-field i:nth-child(1){left:-18vmax;top:30vh;background:radial-gradient(closest-side,rgba(77,200,255,.20),rgba(77,200,255,.07) 55%,transparent)}
-.hb-field i:nth-child(2){right:-22vmax;top:75vh;background:radial-gradient(closest-side,rgba(155,123,255,.20),rgba(155,123,255,.07) 55%,transparent)}
-.hb-field i:nth-child(3){left:18vw;top:120vh;background:radial-gradient(closest-side,rgba(255,159,67,.15),rgba(255,159,67,.05) 55%,transparent)}
-.t0 .hb-field i:nth-child(1){animation:drift1 38s ease-in-out infinite alternate}
-.t0 .hb-field i:nth-child(2){animation:drift2 46s ease-in-out infinite alternate}
-.t0 .hb-field i:nth-child(3){animation:drift3 52s ease-in-out infinite alternate}
-.p-home:not(.active) .hb-field i{animation-play-state:paused}
-@keyframes drift1{to{transform:translate(14vmax,8vmax) scale(1.15)}}
-@keyframes drift2{to{transform:translate(-12vmax,-10vmax) scale(.9)}}
-@keyframes drift3{to{transform:translate(10vmax,-14vmax) scale(1.1)}}
 .hb-grain{opacity:.035;background-size:160px 160px}
 .hlight{position:fixed;left:0;top:0;width:900px;height:900px;margin:-450px 0 0 -450px;border-radius:50%;pointer-events:none;opacity:0;
   background:radial-gradient(closest-side,rgba(255,236,226,.075),rgba(255,236,226,.02) 55%,transparent);transition:opacity .6s;will-change:transform}
@@ -352,8 +432,7 @@ button.tile{cursor:pointer}
 
 @supports (animation-timeline:view()){
   .rail{animation:railGrow linear both;animation-timeline:scroll(nearest)}
-  .hb-field{animation:par2 linear both;animation-timeline:scroll(nearest)}
-  .rise{animation:riseIO linear both;animation-timeline:view();animation-range:cover 0% cover 100%}
+    .rise{animation:riseIO linear both;animation-timeline:view();animation-range:cover 0% cover 100%}
   .rover-sec{view-timeline-name:--rov}
   .rp-cam{animation:rCam linear both;animation-timeline:--rov;animation-range:contain 5% contain 70%}
   .rp-el{animation:rEl linear both;animation-timeline:--rov;animation-range:contain 5% contain 70%}
@@ -363,7 +442,6 @@ button.tile{cursor:pointer}
 }
 @supports not (animation-timeline:view()){.rp-cam{transform:translateX(-50%) translateY(-60px)}.rp-trk{transform:translateX(-50%) translateY(40px)}.lb{opacity:1}}
 @keyframes railGrow{to{transform:scaleY(1)}}
-@keyframes par2{to{transform:translateY(-12vh)}}
 @keyframes riseIO{0%{opacity:0;filter:blur(10px);transform:translateY(40px)}30%,72%{opacity:1;filter:blur(0);transform:none}100%{opacity:0;filter:blur(10px);transform:translateY(-40px)}}
 @keyframes rCam{to{transform:translateX(-50%) translateY(-120px)}}
 @keyframes rEl{to{transform:translateX(-50%) translateY(-56px)}}
@@ -378,7 +456,7 @@ button.tile{cursor:pointer}
   .bars{grid-template-columns:1fr 1fr;height:auto}.bar{min-height:150px}
   .rv{transform:scale(.72);transform-origin:top center}.lb{display:none}.rail{left:8px}
 }
-@media (prefers-reduced-motion:reduce){.hb-field i,.rail,.rise,.rp,.lb,.bar{animation:none!important}.lb{opacity:1}.rv-mini{transition:none}}
+@media (prefers-reduced-motion:reduce){.rail,.rise,.rp,.lb,.bar{animation:none!important}.lb{opacity:1}.rv-mini{transition:none}}
 
 
 /* ================= PROJECTS ================= */
@@ -487,7 +565,16 @@ button.pj{cursor:pointer}
    fights you). Positions are computed once per resize; a focus change only sets transforms and opacity, and the
    compositor plays the springs. */
 #pg-projects{scroll-snap-type:y proximity}
-.ly-trk{position:relative;margin-top:6vh}
+/* the header is one line (a smaller title, the lead beside it) laid over the top of the stage, and the stage starts so that
+   the first project sits right under it: the page opens on the work, not on a title and empty space. LYR sets how far down
+   the stage starts (the margin of .ly-trk); the title scrolls away as usual. */
+.p-projects .pc{padding-top:0;display:flow-root}   /* flow-root: the list's margin stays inside (it must not move the header) */
+.ly-hd{position:absolute;left:24px;right:24px;top:calc(96px + env(safe-area-inset-top,0px));display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px}
+.p-projects .ly-hd h1{font-size:clamp(38px,4.6vw,64px)}
+.p-projects .ly-hd .lead{margin:0;font-size:17px}
+/* the top of the page is a resting place too; it sits outside .pw, so the dive's zoom (a transform on .pw) never moves it */
+.ly-a0{position:absolute;left:0;top:0;width:1px;height:1px;scroll-snap-align:start;pointer-events:none}
+.ly-trk{position:relative}
 .ly-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:clip}
 .ly-a{position:absolute;left:0;width:1px;height:1px;scroll-snap-align:start;pointer-events:none}
 .ly-list{position:absolute;inset:0}
@@ -806,12 +893,15 @@ button.pj{cursor:pointer}
 </style>
 </head>
 <body>
+<div id="intro" aria-hidden="true"><i class="in-line"></i></div>
+<noscript><style>#intro{display:none}</style></noscript>
 
 <div id="stage"><div id="pages">
-  <section class="page p-home active" id="pg-home" aria-label="Home"><div class="pw"><div class="pbg"></div>
-  <div class="hbg" aria-hidden="true"><div class="hb-field"><i></i><i></i><i></i></div><i class="hb-grain"></i></div><i class="hlight" aria-hidden="true"></i><div class="wash"></div><i class="rail" aria-hidden="true"></i>
+  <section class="page p-home active" id="pg-home" aria-label="Home"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="spectrum" aria-hidden="true"></div>
+  <div class="hbg" aria-hidden="true"><i class="hb-grain"></i></div><i class="hlight" aria-hidden="true"></i><div class="wash"></div><i class="rail" aria-hidden="true"></i>
   <div class="pc home">
     <h1 class="ttl r"><span class="tt">Radu Matei</span><span class="tb" aria-hidden="true">Radu Matei</span></h1>
+    <p class="hmeta r"><span class="chip"><i></i>Brașov, Romania</span></p>
 
     <div class="bento">
       <div class="tile lq bd t-intro r">
@@ -892,8 +982,8 @@ button.pj{cursor:pointer}
       <p class="cr">Type: Instrument Sans and IBM Plex Mono (SIL OFL). 3D: three.js (MIT).</p>
     </footer>
   </div></div></section>
-  <section class="page p-projects" id="pg-projects" aria-label="Projects"><div class="pw"><div class="pbg"></div><div class="wash"></div><div class="pc">
-    <h1 class="ttl r"><span class="tt">Projects</span><span class="tb" aria-hidden="true">Projects</span></h1><p class="lead r">Things I've built, biggest first.</p>
+  <section class="page p-projects" id="pg-projects" aria-label="Projects"><i class="ly-a0" aria-hidden="true"></i><div class="pw"><div class="pbg"></div><div class="abg" data-abg="scan" aria-hidden="true"></div><div class="wash"></div><div class="pc">
+    <header class="ly-hd"><h1 class="ttl r"><span class="tt">Projects</span><span class="tb" aria-hidden="true">Projects</span></h1><p class="lead r">Things I've built, biggest first.</p></header>
     <div class="ly-trk" id="ly-trk">
       <div class="ly-a"></div>      <div class="ly-a"></div>      <div class="ly-a"></div>      <div class="ly-a"></div>      <div class="ly-a"></div>      <div class="ly-a"></div>      <div class="ly-a"></div>
       <div class="ly-stage"><div class="ly-list">
@@ -1029,8 +1119,8 @@ nano.<span class="f">send</span>(<span class="s">f'M {int(l * 255 * TRIM_L)} {in
 }</pre></div>
         <h2>Photos</h2>
         <div class="gal">
-          <figure class="ph lq"><img src="assets/img/rover-side.webp" alt="The rover's printed plate on the T101 chassis with the Pi 5, the Nano, the buck converter, the servo mast and the fibre converter" loading="lazy" width="854" height="698"><figcaption>The electronics plate on the T101, from the front.</figcaption></figure>
-          <figure class="ph lq"><img src="assets/img/rover-top.webp" alt="The rover's plate seen from above" loading="lazy" width="638" height="580"><figcaption>From above: Pi 5, Nano, XL4015, TCA9548A and the fibre converter.</figcaption></figure>
+          <figure class="ph lq"><img src="assets/img/rover-side.webp" alt="The rover's printed plate on the T101 chassis with the Pi 5, the Nano, the buck converter, the servo mast and the fibre converter" loading="lazy" decoding="async" width="854" height="698"><figcaption>The electronics plate on the T101, from the front.</figcaption></figure>
+          <figure class="ph lq"><img src="assets/img/rover-top.webp" alt="The rover's plate seen from above" loading="lazy" decoding="async" width="638" height="580"><figcaption>From above: Pi 5, Nano, XL4015, TCA9548A and the fibre converter.</figcaption></figure>
           <div class="ph soon"><span>Drive test video</span><small>coming soon</small></div>
         </div>
         <div class="nexts"><button class="btn p" data-dl="remote">See the controller</button><button class="btn s" data-dl="link">See the link</button><button class="btn s" data-dl="select">All parts</button></div>
@@ -1062,12 +1152,12 @@ nano.<span class="f">send</span>(<span class="s">f'M {int(l * 255 * TRIM_L)} {in
     <span class="k">return</span> <span class="f">_deadzone</span>(x, c[<span class="s">'deadzone'</span>]), <span class="f">_deadzone</span>(y, c[<span class="s">'deadzone'</span>])</pre></div>
         <h2>Photos</h2>
         <div class="gal">
-          <figure class="ph wide cut"><img src="assets/img/remote-front.webp" alt="The finished controller from the front: screen, two joysticks and the green cells in the grips" loading="lazy" width="1100" height="752"><figcaption>Finished, from the front.</figcaption></figure>
-          <figure class="ph cut lq"><img src="assets/img/remote-back.webp" alt="The controller from the back: the screen's board, the cover with the fan and the HDMI cable" loading="lazy" width="1100" height="873"><figcaption>The back, with the cooling fan.</figcaption></figure>
-          <figure class="ph lq"><img src="assets/img/remote-hand.webp" alt="The controller held in one hand" loading="lazy" width="900" height="710"><figcaption>In the hand.</figcaption></figure>
-          <figure class="ph lq"><img src="assets/img/remote-inside.webp" alt="The controller's Pi 5 and wiring inside the printed case" loading="lazy" width="900" height="880"><figcaption>Inside, during assembly.</figcaption></figure>
-          <figure class="ph wide lq"><img src="assets/img/hud.webp" alt="The control interface: live video, picture in picture, batteries and proximity map" loading="lazy" width="1400" height="729"><figcaption>The interface, before a camera is connected.</figcaption></figure>
-          <figure class="ph wide lq"><img src="assets/img/monitor.webp" alt="The system monitor window showing the controller, the rover and the dock" loading="lazy" width="1400" height="722"><figcaption>The system monitor for all three Pis.</figcaption></figure>
+          <figure class="ph wide cut"><img src="assets/img/remote-front.webp" alt="The finished controller from the front: screen, two joysticks and the green cells in the grips" loading="lazy" decoding="async" width="1100" height="752"><figcaption>Finished, from the front.</figcaption></figure>
+          <figure class="ph cut lq"><img src="assets/img/remote-back.webp" alt="The controller from the back: the screen's board, the cover with the fan and the HDMI cable" loading="lazy" decoding="async" width="1100" height="873"><figcaption>The back, with the cooling fan.</figcaption></figure>
+          <figure class="ph lq"><img src="assets/img/remote-hand.webp" alt="The controller held in one hand" loading="lazy" decoding="async" width="900" height="710"><figcaption>In the hand.</figcaption></figure>
+          <figure class="ph lq"><img src="assets/img/remote-inside.webp" alt="The controller's Pi 5 and wiring inside the printed case" loading="lazy" decoding="async" width="900" height="880"><figcaption>Inside, during assembly.</figcaption></figure>
+          <figure class="ph wide lq"><img src="assets/img/hud.webp" alt="The control interface: live video, picture in picture, batteries and proximity map" loading="lazy" decoding="async" width="1400" height="729"><figcaption>The interface, before a camera is connected.</figcaption></figure>
+          <figure class="ph wide lq"><img src="assets/img/monitor.webp" alt="The system monitor window showing the controller, the rover and the dock" loading="lazy" decoding="async" width="1400" height="722"><figcaption>The system monitor for all three Pis.</figcaption></figure>
         </div>
         <div class="nexts"><button class="btn p" data-dl="rover">See the rover</button><button class="btn s" data-dl="link">See the link</button><button class="btn s" data-dl="select">All parts</button></div>
       </section>
@@ -1115,15 +1205,15 @@ last = t</pre></div>
       </section>
     </div>
   </div></section>
-  <section class="page p-record" id="pg-record" aria-label="Record"><div class="pw"><div class="pbg"></div><div class="wash"></div><div class="pc">
+  <section class="page p-record" id="pg-record" aria-label="Record"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="rays" aria-hidden="true"></div><div class="wash"></div><div class="pc">
     <h1 class="ttl r"><span class="tt">Record</span><span class="tb" aria-hidden="true">Record</span></h1><p class="lead r">Where I've been and what I picked up along the way.</p>
     <div class="cards r"><article class="card lq"><h3>Siemens Energy</h3><p>Internship, PRAM department, Petrobrazi refinery.</p></article><article class="card lq"><h3>UniTBV · ETTI</h3><p>B.Eng. Telecommunications, Brașov.</p></article><article class="card lq"><h3>Certifications</h3><p>[Add yours, each with a verification link.]</p></article></div>
   </div></div></section>
-  <section class="page p-about" id="pg-about" aria-label="About"><div class="pw"><div class="pbg"></div><div class="wash"></div><div class="pc">
+  <section class="page p-about" id="pg-about" aria-label="About"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="waves" aria-hidden="true"></div><div class="wash"></div><div class="pc">
     <h1 class="ttl r"><span class="tt">About</span><span class="tb" aria-hidden="true">About</span></h1><p class="lead r">Off the clock: competitive tennis, F1 and games.</p>
     <div class="cards r"><article class="card lq"><h3>Tennis</h3><p>Competitive player. The serve animation lands here.</p></article><article class="card lq"><h3>F1</h3><p>Race-engineer brain, sofa on Sundays.</p></article><article class="card lq"><h3>Games</h3><p>[Your current rotation]</p></article></div>
   </div></div></section>
-  <section class="page p-contact" id="pg-contact" aria-label="Contact"><div class="pw"><div class="pbg"></div><div class="wash"></div><div class="pc">
+  <section class="page p-contact" id="pg-contact" aria-label="Contact"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="rings" aria-hidden="true"></div><div class="wash"></div><div class="pc">
     <h1 class="ttl r"><span class="tt">Contact</span><span class="tb" aria-hidden="true">Contact</span></h1><p class="lead r">Open a channel. I read everything.</p>
     <div class="cards r"><article class="card lq"><h3>Email</h3><p>[your email]</p></article><article class="card lq"><h3>LinkedIn</h3><p>[linkedin.com/in/…]</p></article><article class="card lq"><h3>GitHub</h3><p>[github.com/…]</p></article></div>
     <div class="row r"><button class="btn s" data-go="home">Back home</button></div>
@@ -1157,6 +1247,7 @@ last = t</pre></div>
 <script type="importmap">{"imports":{"three":"./assets/vendor/three/three.module.min.js","three/addons/":"./assets/vendor/three/addons/"}}</script>
 <script src="assets/js/light.js"></script>
 <script src="assets/js/datalink-3d.js"></script>
+<script src="assets/js/themes.js"></script>
 <script src="assets/js/tab-icon.js" defer></script>
 <script>
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1188,6 +1279,13 @@ function aSpring(d,b=0){const w=2*Math.PI/d,z=1-b,eps=.0012,wd=w*Math.sqrt(Math.
 /* the island: opening is elastic (it grows like something alive), closing is quick and calm, a new label sits in between */
 const SPR={open:aSpring(.5,.2),close:aSpring(.4,.05),size:aSpring(.44,.14),pop:aSpring(.34,.3),zoom:aSpring(.6,.05),unzoom:aSpring(.52,0)};
 const idle=f=>(window.requestIdleCallback?requestIdleCallback(f,{timeout:2000}):setTimeout(f,250));
+/* a list of small jobs done in idle time: as many as fit in one idle period (at least one), the rest in the next ones, and none
+   while a page transition runs, so a long batch never lands in the middle of a dive */
+function idleEach(list,fn){let i=0;
+  const run=dl=>{if(busy){setTimeout(()=>idle(run),200);return}const t0=performance.now();
+    while(i<list.length){fn(list[i++]);if(dl&&dl.timeRemaining?dl.timeRemaining()<4:performance.now()-t0>8)break}
+    if(i<list.length)idle(run)};
+  if(list.length)idle(run)}
 
 /* ---------- quality tiers: 0 full · 1 balanced · 2 lite (no backdrop blur) · 3 minimal light ----------
    start from device hints, then step down if the light animation actually keeps missing frames */
@@ -1218,6 +1316,48 @@ const PREFS=(()=>{const P='rm:',KEYS=['menu-found'];
       else{ls.removeItem(P+'consent');KEYS.forEach(k=>ls.removeItem(P+k));st=ses}}catch(e){}}
   return{get,set,persist}})();
 
+/* ---------- the time of year ----------
+   The visitor's own calendar picks what the site wears: an event while one is on (from a week to five weeks around it, see
+   below), otherwise the season. Here it tints the ambient light (one pool and a few particles, see AMBIENT); the pictures
+   (cobwebs and bats, a string of lights, snow on the island, palms...) are in assets/js/themes.js. Nothing is stored or sent.
+   Preview any of them with ?season=halloween (or xmas, newyear, birthday, easter, martisor, spring, summer, autumn, winter). */
+const SEASON=(()=>{const now=new Date(),Y=now.getFullYear(),day=(y,m,d)=>new Date(y,m-1,d),plus=(t,n)=>new Date(t.getFullYear(),t.getMonth(),t.getDate()+n);
+  const T=day(Y,now.getMonth()+1,now.getDate());
+  /* Easter as Romania keeps it (Orthodox): the Julian computus (Meeus), moved to the Gregorian calendar (+13 days, 1900-2099) */
+  const easter=y=>{const a=y%4,b=y%7,c=y%19,d=(19*c+15)%30,e=(2*a+4*b-d+34)%7,m=Math.floor((d+e+114)/31),dd=(d+e+114)%31+1;return day(y,m,dd+13)};
+  /* each event: id, first and last day it shows. In order of priority, for the year before, this year and the next
+     (Christmas and New Year cross the new year). How long each one stays: New Year 30 Dec - 2 Jan; my birthday a week
+     (21-27 Jan, the 24th in the middle); Mărțișor 1-9 March; Easter the week before it to Easter Monday; Halloween two weeks
+     (17 Oct - 1 Nov); Christmas all of December to 7 January (St John). */
+  const list=y=>{const E=easter(y);return[
+    ['newyear',day(y,12,30),day(y+1,1,2)],
+    ['birthday',day(y,1,21),day(y,1,27)],
+    ['easter',plus(E,-6),plus(E,1)],
+    ['martisor',day(y,3,1),day(y,3,9)],
+    ['halloween',day(y,10,17),day(y,11,1)],
+    ['xmas',day(y,12,1),day(y+1,1,7)]]};
+  const all=[...list(Y-1),...list(Y),...list(Y+1)],order=['newyear','birthday','easter','martisor','halloween','xmas'];
+  const season=m=>m<3||m===12?'winter':m<6?'spring':m<9?'summer':'autumn';
+  /* the look of each in the ambient light: two tint colours, the particles and their colours */
+  const LOOK={
+    halloween:{tint:['#FF7A1A','#9B5BFF'],fx:'ember',cols:['#FFB15A','#FF7A1A','#FFD08A']},
+    xmas:{tint:['#CFE3FF','#FF4D5E'],fx:'snow',cols:['#FFFFFF']},
+    newyear:{tint:['#FFD36B','#FFF1C9'],fx:'spark',cols:['#FFE7A3','#FFFFFF','#FFD36B']},
+    birthday:{tint:['#FF5A6A','#4DC8FF'],fx:'confetti',cols:['#FF5A6A','#FF9F43','#FFE14D','#5CF59A','#4DC8FF','#9B7BFF']},
+    easter:{tint:['#FFB8CC','#B9F3CF'],fx:'petal',cols:['#FFC9D9','#FFF3B8','#BDF4D2','#CFC4FF']},
+    martisor:{tint:['#FF3B4E','#FFFFFF'],fx:'martisor',cols:['#FF3B4E','#FFFFFF']},
+    spring:{tint:['#8EF5B0','#FFC6DA'],fx:'petal',cols:['#FFD3E2','#FFFFFF','#FFC6DA']},
+    summer:{tint:['#FFC861','#FF9F43'],fx:'mote',cols:['#FFE2A0','#FFC861']},
+    autumn:{tint:['#FF9A3C','#C2541F'],fx:'leaf',cols:['#FF9A3C','#E0662A','#F4B23C']},
+    winter:{tint:['#BFDFFF','#FFFFFF'],fx:'snow',cols:['#FFFFFF']}};
+  const ask=(new URLSearchParams(location.search).get('season')||'').toLowerCase(),
+    on=order.map(k=>all.find(x=>x[0]===k&&T>=x[1]&&T<=x[2])).find(Boolean),
+    id=LOOK[ask]?ask:on?on[0]:season(T.getMonth()+1);
+  const look=LOOK[id];root.dataset.season=id;root.style.setProperty('--s1',look.tint[0]);root.style.setProperty('--s2',look.tint[1]);
+  return{id,...look}})();
+/* the time of year's pictures (assets/js/themes.js); if that file is missing, the site simply goes without */
+const TH=window.THEMES||{mount(){},back(){},island(){},menu(){},page(){},tier(){},reveal(){}};
+
 /* ---------- liquid glass: refraction maps (Chromium) ----------
    A displacement map built from the shape's distance field bends what is behind the glass near its edges, the way a thick
    rounded lens does; the middle stays clear. One SVG filter per size, built once while the browser is idle and reused.
@@ -1226,7 +1366,7 @@ const GLASS=(()=>{const ua=navigator.userAgent,ok=!!window.chrome&&/Chrome|Chrom
   let host=null;const cache=new Map();
   const sdf=(x,y,w,h,r)=>{const qx=Math.abs(x-w/2)-(w/2-r),qy=Math.abs(y-h/2)-(h/2-r);return Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-r};
   function map(W,H,R,BZ){const k=W*H>160000?3:W*H>60000?2:1,w=Math.ceil(W/k),h=Math.ceil(H/k),r=R/k,bz=BZ/k;
-    const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d'),im=g.createImageData(w,h),d=im.data;
+    const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d',{willReadFrequently:true}),im=g.createImageData(w,h),d=im.data;   // CPU canvas: toDataURL never waits on the GPU
     for(let y=0;y<h;y++)for(let x=0;x<w;x++){const px=x+.5,py=y+.5,s=-sdf(px,py,w,h,r);let dx=0,dy=0;
       if(s>0&&s<bz){const gx=sdf(px+1,py,w,h,r)-sdf(px-1,py,w,h,r),gy=sdf(px,py+1,w,h,r)-sdf(px,py-1,w,h,r),L=Math.hypot(gx,gy)||1,t=1-s/bz,m=t*t;dx=gx/L*m;dy=gy/L*m}
       const i=(y*w+x)*4;d[i]=128+dx*127;d[i+1]=128+dy*127;d[i+2]=128;d[i+3]=255}g.putImageData(im,0,0);return c.toDataURL()}
@@ -1246,9 +1386,15 @@ const GLASS=(()=>{const ua=navigator.userAgent,ok=!!window.chrome&&/Chrome|Chrom
 /* glass surfaces that should refract: sized from the element, refreshed when it changes size or the tier changes */
 const LQ=(()=>{const opts=new Map(),q=new Set();let t=0;
   const ro=window.ResizeObserver?new ResizeObserver(es=>es.forEach(e=>queue(e.target))):null;
-  function queue(el){q.add(el);if(!t)t=setTimeout(()=>{t=0;idle(()=>{q.forEach(apply);q.clear()})},140)}
-  function apply(el){const o=opts.get(el);if(!o||!el.isConnected)return;const w=el.offsetWidth,h=el.offsetHeight;if(!w||!h)return;
-    const r=Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius)||20,w/2,h/2);GLASS.set(el,w,h,r,o.tier,o.sc,o.blur,o.sat)}
+  function queue(el){q.add(el);if(!t)t=setTimeout(()=>{t=0;idle(flush)},140)}
+  /* every size is read in one go (one layout, also for the panels of pages that are not shown), then the maps are built one
+     idle slot at a time; never during a page transition */
+  function flush(){if(busy){setTimeout(()=>idle(flush),200);return}const jobs=[];q.forEach(el=>{const j=measure(el);if(j)jobs.push(j)});q.clear();
+    idleEach(jobs,j=>{if(j[0].isConnected)set(j)})}
+  function measure(el){const o=opts.get(el);if(!o||!el.isConnected)return null;const w=el.offsetWidth,h=el.offsetHeight;if(!w||!h)return null;
+    return[el,w,h,Math.min(parseFloat(getComputedStyle(el).borderTopLeftRadius)||20,w/2,h/2),o]}
+  const set=([el,w,h,r,o])=>GLASS.set(el,w,h,r,o.tier,o.sc,o.blur,o.sat);
+  function apply(el){const j=measure(el);if(j)set(j)}
   function watch(el,o={}){if(!GLASS.ok||opts.has(el))return;opts.set(el,{tier:o.tier??1,sc:o.sc??50,blur:o.blur??2,sat:o.sat??1.8});ro?ro.observe(el):queue(el)}
   TIER.on(()=>opts.forEach((o,el)=>queue(el)));
   return{watch,apply}})();
@@ -1495,7 +1641,7 @@ function islandTo(l,{spr=SPR.size,stage=0,dur}={}){ilabel.style.width=l.label.w+
     const o0=getComputedStyle(icap).opacity,on=l.cap.o>0;icap.getAnimations().forEach(a=>{if(a.id==='cap')a.cancel()});icap.style.opacity=String(l.cap.o);
     icap.animate([{opacity:o0,filter:on?'blur(5px)':'blur(0px)'},{opacity:String(l.cap.o),filter:on?'blur(0px)':'blur(4px)'}],{duration:on?D*.55:160,delay:on?D*.3:0,easing:on?OUT:IN,fill:'backwards',id:'cap'})}
   else icap.style.opacity=String(l.cap.o);
-  if(onIslandW&&!l.open)onIslandW(l.w,D,E,dw);
+  if(!l.open){if(onIslandW)onIslandW(l.w,D,E,dw);TH.island(l.w,D,E,dw)}
   const done=Promise.all(P);
   done.then(()=>{if(island.classList.contains('open')){if(menuOpen&&!busy)glassT=setTimeout(()=>GLASS.set(island,l.w,l.h,l.r,0,40,2.5),80)}
     else if(!menuOpen)glassT=setTimeout(()=>GLASS.set(island,l.w,l.h,l.r,1,70),60)});return done}
@@ -1509,8 +1655,12 @@ function setLabel(txt){if(ilabel.dataset.t===txt)return;ilabel.dataset.t=txt;con
 function setCap(txt){if(icap.textContent===txt)return;icap.textContent=txt;
   if(!reduce){icap.getAnimations().forEach(a=>{if(a.id==='f')a.cancel()});icap.animate([{opacity:.15,filter:'blur(3px)'},{opacity:1,filter:'blur(0px)'}],{duration:240,easing:OUT,id:'f'})}}
 function collapseIsland(){island.classList.remove('open');setLabel(LBL);return islandTo(closedLay(),{spr:SPR.close,stage:-1})}
-/* refraction maps for every label the island can show, built while the browser is idle (not in the middle of a dive) */
-function prepGlass(){if(GLASS.ok)idle(()=>PAGES.forEach(p=>{if(p.id==='cv')return;const l=closedLay(p.name);GLASS.prep(l.w,l.h,l.r)}))}
+/* refraction maps for every shape the island, the orbs and the back button can take, built while the browser is idle (not in
+   the middle of a dive, where building one would hold up a frame) */
+function prepGlass(){if(!GLASS.ok)return;
+  const jobs=[...PAGES.filter(p=>p.id!=='cv').map(p=>p.name),'DataLink Rover','Rover','Controller','Link'].map(n=>()=>{if(TIER.t>1)return;const l=closedLay(n);GLASS.prep(l.w,l.h,l.r)});
+  jobs.push(()=>{if(TIER.t>0||!GEO.beams)return;const l=openLay();GLASS.prep(l.w,l.h,l.r,40)},()=>{if(TIER.t>0)return;const z=GEO.os||60;GLASS.prep(z,z,z/2,24)},()=>{if(TIER.t<=1)GLASS.prep(46,46,23,50)});
+  idleEach(jobs,f=>f())}
 
 /* ---------- orbs ---------- */
 const orbsBox=$('#orbs'),veil=$('#veil'),stage=$('#stage'),dimEl=$('#dim');
@@ -1573,19 +1723,20 @@ function hover(i){if(!menuOpen||busy)return;clearTimeout(hovT);
   if(i<0){hovT=setTimeout(()=>{hovI=-1;LIGHT.hover(0,0);setLabel('Pages');setCap(GEO.mob?'white light':'white light · 400–700 nm')},120);return}
   if(hovI===i)return;hovI=i;const p=PAGES[i];LIGHT.hover(p.lam,1.7);setLabel(p.name);
   setCap(GEO.mob?`${p.lam} nm · n ${p.n.toFixed(2)}`:`λ ${p.lam} nm · n ${p.n.toFixed(3)} · δ ${(p.D/RAD).toFixed(1)}°`)}
-async function openMenu(viaKey){if(menuOpen||busy)return;menuOpen=true;HINT.found();DROP.pause(true);PROJ.vis();SEL=-1;hovI=-1;ensureLayout();placeOrbs();resetOrbLight();
+async function openMenu(viaKey){if(menuOpen||busy)return;menuOpen=true;root.classList.add('mo');   // .mo: the ambient light holds still under the menu
+  HINT.found();DROP.pause(true);PROJ.vis();SEL=-1;hovI=-1;ensureLayout();placeOrbs();resetOrbLight();
   ORBS.forEach(o=>{o.shown=false;o.b.getAnimations().forEach(a=>a.cancel());o.b.style.opacity='';o.b.classList.remove('vis');o.b.tabIndex=0});
   island.classList.add('open');island.setAttribute('aria-expanded','true');island.setAttribute('aria-label','Close menu');
   orbsBox.style.visibility='';orbsBox.classList.add('on');veil.classList.add('on');
   [LIGHT.el,orbsBox].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.style.transform='';el.style.opacity=''});
   setLabel('Pages');icap.textContent=GEO.mob?'white light':'white light · 400–700 nm';
   iprism.getAnimations().forEach(a=>a.cancel());iprism.style.opacity='';
-  islandTo(openLay(),{spr:SPR.open,stage:1});
+  islandTo(openLay(),{spr:SPR.open,stage:1});TH.menu(true,{w:GEO.iw,h:GEO.ih});
   ORBS.forEach(o=>{const z=o.b.offsetWidth;if(z)GLASS.set(o.b,z,z,z/2,0,24,1.5,1.9)});
   await sleep(reduce?0:400);if(!menuOpen||busy)return;
   LIGHT.ignite();
   if(viaKey)setTimeout(()=>ORBS[0].b.focus({preventScroll:true}),reduce?0:LIGHT.travel)}
-function releaseMenu(){menuOpen=false;PROJ.vis();veil.classList.remove('on');orbsBox.classList.remove('on');
+function releaseMenu(){menuOpen=false;root.classList.remove('mo');TH.menu(false);PROJ.vis();veil.classList.remove('on');orbsBox.classList.remove('on');
   island.setAttribute('aria-expanded','false');island.setAttribute('aria-label','Open menu');ORBS.forEach(o=>o.b.tabIndex=-1)}
 async function closeMenu(){if(!menuOpen)return;releaseMenu();LIGHT.off();setLabel(LBL);
   await sleep(reduce?0:140);if(menuOpen)return;collapseIsland();if(!busy)DROP.pause(false);
@@ -1602,8 +1753,9 @@ addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(()
 /* ---------- navigation: tune the lamp to the page wavelength, then dive through the prism ---------- */
 const pageEl=id=>document.getElementById('pg-'+id);
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2000)}
-function revealContent(el,skip){el.classList.remove('pre');[...el.querySelectorAll('.r')].filter(r=>r!==skip).forEach((r,i)=>r.animate(
-  [{opacity:0,transform:'translateY(22px)'},{opacity:1,transform:'none'}],{duration:reduce?1:760,delay:reduce?0:i*70,easing:SOFT,fill:'both'}))}
+/* the page's pieces (.r) rise in one after another; the first look of the page asks for a later, slower one */
+function revealContent(el,skip,{delay=0,gap=70,dur=760}={}){el.classList.remove('pre');return[...el.querySelectorAll('.r')].filter(r=>r!==skip).map((r,i)=>r.animate(
+  [{opacity:0,transform:'translateY(22px)'},{opacity:1,transform:'none'}],{duration:reduce?1:dur,delay:reduce?0:delay+i*gap,easing:SOFT,fill:'both'}))}
 async function select(i){if(busy||!menuOpen)return;const P=PAGES[i];
   if(P.id===current){closeMenu();return}
   if(current==='dl'&&P.id==='projects'){closeMenu();setTimeout(()=>DL.leave(),reduce?0:260);return}
@@ -1621,11 +1773,12 @@ function finish(o,n,P){
   o.classList.remove('active');[o,n,n.querySelector('.pw'),n.querySelector('.wash'),dimEl].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());
     Object.assign(el.style,{clipPath:'',transform:'',transformOrigin:'',opacity:'',zIndex:'',background:'',willChange:''})});
   n.querySelectorAll('.r').forEach(r=>r.style.willChange='');
-  n.classList.remove('warm');n.classList.add('active');n.classList.remove('pre');current=P.id;PROJ.left(o,n);DROP.pause(false);
+  n.classList.remove('warm');n.classList.add('active');n.classList.remove('pre');current=P.id;TH.page(P.id);PROJ.left(o,n);DROP.pause(false);
   ORBS.forEach(x=>{x.shown=false;x.b.getAnimations().forEach(a=>a.cancel());x.b.style.opacity='0';x.b.classList.remove('vis')});
   [LIGHT.el,orbsBox].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.style.transform='';el.style.opacity=''});
   LIGHT.diveEnd();root.classList.remove('hush');
-  orbsBox.style.visibility='hidden';LIGHT.hide();busy=false;SEL=-1;island.focus({preventScroll:true})}
+  orbsBox.style.visibility='hidden';LIGHT.hide();busy=false;SEL=-1;island.focus({preventScroll:true});
+  if(n.querySelector('.abg'))PACE.check()}
 /* in-page buttons skip the menu: a short cue on the island's prism, then the dive zooms straight out of it */
 function prismGeo(at){const l=closedLay(),s=at?.7:l.prism.s,cx=at?at[0]:innerWidth/2+l.prism.x,cy=at?at[1]:GEO.top+l.prism.y;
   return{V:[[0,-40],[34.641,20],[-34.641,20]].map(([x,y])=>[cx+x*s,cy+y*s]),P:[cx,cy],rho:40*s}}
@@ -1706,7 +1859,7 @@ const HOME=(()=>{const page=$('#pg-home'),sheet=$('#sheet'),shBox=sheet.querySel
   const onScreen=(el,f)=>new IntersectionObserver(es=>es.forEach(e=>f(e.isIntersecting))).observe(el);
 
   /* film grain, drawn once into a small tile */
-  idle(()=>{const m=128,c2=document.createElement('canvas');c2.width=c2.height=m;const g2=c2.getContext('2d'),im2=g2.createImageData(m,m);
+  idle(()=>{const m=128,c2=document.createElement('canvas');c2.width=c2.height=m;const g2=c2.getContext('2d',{willReadFrequently:true}),im2=g2.createImageData(m,m);
     for(let i=0;i<m*m;i++){const v=Math.random()*255;im2.data.set([v,v,v,255],i*4)}g2.putImageData(im2,0,0);
     page.querySelector('.hb-grain').style.backgroundImage=`url(${c2.toDataURL()})`});
 
@@ -1799,10 +1952,13 @@ const HOME=(()=>{const page=$('#pg-home'),sheet=$('#sheet'),shBox=sheet.querySel
   sheet.querySelector('.sh-bg').addEventListener('click',()=>closeSheet());sheet.querySelector('.sh-x').addEventListener('click',()=>closeSheet());
   addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 
-  /* refraction maps for the glass panels (Chromium; full and balanced tiers), rebuilt when sizes change */
-  function refract(){[...page.querySelectorAll('.tile,.hud')].forEach(el=>{const w=el.offsetWidth,h=el.offsetHeight;if(!w||!h)return;
-    GLASS.set(el,w,h,Math.min(26,parseFloat(getComputedStyle(el).borderTopLeftRadius)||20),1,50)})}
-  return{refract:()=>idle(refract),sheetOpen:()=>!sheet.hidden,closeSheet}})();
+  /* refraction maps for the glass panels (Chromium; full and balanced tiers), rebuilt when sizes change; one panel at a time in
+     idle time, and only the latest request runs (a resize can ask several times) */
+  let rgen=0;
+  function refract(){const g=++rgen,m=()=>{if(g!==rgen)return;if(busy){setTimeout(()=>idle(m),200);return}
+    const jobs=[...page.querySelectorAll('.tile,.hud')].map(el=>[el,el.offsetWidth,el.offsetHeight,Math.min(26,parseFloat(getComputedStyle(el).borderTopLeftRadius)||20)]);   // sizes in one go
+    idleEach(jobs,([el,w,h,r])=>{if(g===rgen&&w&&h)GLASS.set(el,w,h,r,1,50)})};idle(m)}
+  return{refract,sheetOpen:()=>!sheet.hidden,closeSheet}})();
 
 /* ---------- back button: a drop that leaves the island, and joins it again ----------
    While it moves, the island and the drop are one shape: a metaball outline (island pill + neck + drop) drawn as the
@@ -1926,21 +2082,24 @@ const BACKG=(()=>{const DEPTH=6;let warned=false,wT=0,waitT=0;
    The track holds one snap point per project; the stage inside it is pinned. Where the scroll sits picks the project in
    focus; a change of focus lays the list out again (transforms and opacity only) and the CSS springs do the rest.
    Heights are measured once per resize, never while scrolling. */
-const LYR=(()=>{const pg=$('#pg-projects'),trk=$('#ly-trk'),list=trk.querySelector('.ly-list'),its=[...list.children],anc=[...trk.querySelectorAll('.ly-a')],N=its.length;
+const LYR=(()=>{const pg=$('#pg-projects'),trk=$('#ly-trk'),hd=pg.querySelector('.ly-hd'),list=trk.querySelector('.ly-list'),its=[...list.children],anc=[...trk.querySelectorAll('.ly-a')],N=its.length;
   let k=0,M=null,step=1,t0=0,raf=0,key='';
   function measure(){if(!(pg.classList.contains('active')||pg.classList.contains('warm')))return;
     const vh=innerHeight;step=Math.round(vh*.72);
     trk.style.height=((N-1)*step+vh)+'px';anc.forEach((a,i)=>a.style.top=(i*step)+'px');
     const m=its.map(el=>({nh:el.querySelector('.ly-n').offsetHeight,bh:el.querySelector('.ly-b').offsetHeight}));
     if(!m[0].nh)return;M=m;key=innerWidth+'x'+innerHeight;M.s=parseFloat(getComputedStyle(its[0]).getPropertyValue('--lys'))||.44;
+    M.top=hd.offsetTop+hd.offsetHeight+Math.max(26,vh*.045);trk.style.marginTop=Math.max(0,M.top-off(0))+'px';   // the first project, right under the header
     t0=trk.getBoundingClientRect().top-pg.getBoundingClientRect().top+pg.scrollTop;
     k=clamp(Math.round((pg.scrollTop-t0)/step),0,N-1);place(true)}
+  /* where the project in focus sits: clear of the island, in the upper part of the screen, never lower than right under the header */
+  const off=i=>Math.max(86,Math.min((innerHeight-M[i].nh-M[i].bh)/2,innerHeight*.2,M.top));
   function place(now){if(!M)return;const vh=innerHeight,s=M.s,gC=Math.max(10,vh*.012),gE=Math.max(30,vh*.05);let y=0;const ys=[];
     its.forEach((el,i)=>{ys.push(y);y+=i===k?M[i].nh+M[i].bh+gE:M[i].nh*s+gC});
-    const h=M[k].nh+M[k].bh,off=Math.max(86,(vh-h)/2)-ys[k];
+    const o=off(k)-ys[k];
     if(now)list.classList.add('nt');
     its.forEach((el,i)=>{const d=Math.abs(i-k);el.classList.toggle('on',d===0);el.classList.toggle('far',d>1);
-      el.style.transform=`translate3d(0,${(ys[i]+off).toFixed(1)}px,0)`;el.style.opacity=d===0?1:d===1?.55:d===2?.3:d===3?.14:0;
+      el.style.transform=`translate3d(0,${(ys[i]+o).toFixed(1)}px,0)`;el.style.opacity=d===0?1:d===1?.55:d===2?.3:d===3?.14:0;
       const b=el.querySelector('.ly-b');if(d===0)b.removeAttribute('inert');else b.setAttribute('inert','')});
     if(now){list.offsetHeight;requestAnimationFrame(()=>list.classList.remove('nt'))}
     PROJ.vis()}
@@ -1963,7 +2122,15 @@ const PROJ=(()=>{const pp=$('#pg-projects'),dl=$('#pg-dl'),card=$('#pj-rover'),c
   const io=new IntersectionObserver(es=>{es.forEach(e=>seen.set(e.target,e.isIntersecting));vis()});io.observe(cslot);io.observe(dslot);
   [pp,dl].forEach(p=>new MutationObserver(vis).observe(p,{attributes:true,attributeFilter:['class']}));
   let loading=false;
-  function load(){if(loading||!window.DL3D)return;loading=true;DL3D.init(TIER.t).then(ok=>{if(!ok)return;card.classList.add('rv-ready');
+  /* the 3D view's heavy steps (renderer, models, shaders, the detailed models' swap) wait for a calm moment: never in the
+     middle of a page transition */
+  if(window.DL3D)DL3D.busy=()=>busy;
+  /* ...and whether its canvas is out of sight (on a page that is not shown, scrolled away, or hidden with its card): only then
+     may it draw something other than the picture (warmUp in datalink-3d.js) */
+  if(window.DL3D)DL3D.offscreen=()=>{const c=DL3D.canvas,s=c&&c.parentNode;if(!s||!s.isConnected)return true;if(s!==cslot&&s!==dslot)return false;
+    const pg=s.closest('.page');if(!(pg.classList.contains('active')||pg.classList.contains('warm')))return true;
+    return !seen.get(s)||getComputedStyle(s).visibility==='hidden'};
+  function load(){if(loading||!window.DL3D)return;if(busy){setTimeout(load,150);return}loading=true;DL3D.init(TIER.t).then(ok=>{if(!ok)return;card.classList.add('rv-ready');
     if(current==='dl'){DL3D.mount(dslot);DL3D.go(DL.mode,{dur:0})}else{DL3D.mount(cslot);DL3D.go('card',{dur:0})}vis()})}
   TIER.on(t=>{if(window.DL3D)DL3D.setTier(t)});      /* also before the model is in: init() may already have run with the old tier */
   /* the projects page is about to be shown some other way (menu): put the model back in its card */
@@ -2118,20 +2285,30 @@ const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),c
   function cardHide(c,d){c.getAnimations().forEach(a=>a.cancel());if(reduce){c.classList.remove('on');return}
     const a=c.animate([{opacity:1,translate:'0 0',scale:'1'},{opacity:0,translate:`0 ${-16*d}px`,scale:'.975'}],{duration:190,easing:IN,fill:'forwards'});
     a.finished.then(()=>{if(cardOn!==c){c.classList.remove('on');a.cancel()}},()=>{})}
-  function cardsUi(w){const y=page.scrollTop;if(y!==lastY){dir=y>lastY?1:-1;lastY=y}
+  function cardsUi(w){const y=w.y;if(y!==lastY){dir=y>lastY?1:-1;lastY=y}
     let c=w.seg&&w.seg.card&&w.t>.05&&w.t<.95?w.seg.card:null;
-    if(c&&segs.length){const L=segs[segs.length-1],end=L.top+L.h-page.scrollTop;   // where the content after the story starts on screen
+    if(c&&segs.length){const L=segs[segs.length-1],end=L.top+L.h-y;   // where the content after the story starts on screen
       if(end<sh&&end<c.getBoundingClientRect().bottom+12)c=null}
     if(c===cardOn)return;
     if(cardOn)cardHide(cardOn,dir);cardOn=c;if(c)cardShow(c,dir)}
   function cardsOut(){if(cardOn)cardHide(cardOn,-1);cardOn=null}
   function cardsReset(){cardOn=null;cardsBox.querySelectorAll('.sc').forEach(c=>{c.getAnimations().forEach(a=>a.cancel());c.classList.remove('on')})}
   const D=()=>window.DL3D&&DL3D.ok?DL3D:null,pad2=n=>String(n).padStart(2,'0');
-  /* faint terrain lines behind the rover, drawn once */
-  idle(()=>{const c=document.createElement('canvas');c.width=1400;c.height=900;const g=c.getContext('2d');g.strokeStyle='rgba(255,176,120,.26)';g.lineWidth=1.3;
+  /* faint terrain lines behind the rover, drawn once. Drawing, reading back and encoding a 1400 x 900 picture on the page held
+     it for over a second on a slow phone, so a worker does it on an OffscreenCanvas (the same drawing) and sends the picture
+     back; browsers without that draw it on the page and encode it with toBlob, off the main thread */
+  const topo=g=>{g.strokeStyle='rgba(255,176,120,.26)';g.lineWidth=1.3;
     for(let i=1;i<27;i++){const r=i*33;g.beginPath();for(let a=0;a<=360;a+=3){const t=a*Math.PI/180,w=r*(1+.1*Math.sin(3*t+i*.3)+.06*Math.sin(5*t-i*.5)+.035*Math.sin(9*t+i));
-      const x=700+Math.cos(t)*w*1.4,y=560+Math.sin(t)*w*.6;a?g.lineTo(x,y):g.moveTo(x,y)}g.closePath();g.stroke()}
-    page.style.setProperty('--topo',`url(${c.toDataURL('image/webp',.8)})`)});
+      const x=700+Math.cos(t)*w*1.4,y=560+Math.sin(t)*w*.6;a?g.lineTo(x,y):g.moveTo(x,y)}g.closePath();g.stroke()}};
+  const setTopo=u=>page.style.setProperty('--topo',`url(${u})`);
+  idle(()=>{const onPage=()=>{const c=document.createElement('canvas');c.width=1400;c.height=900;topo(c.getContext('2d'));
+      if(c.toBlob)c.toBlob(b=>{if(b)setTopo(URL.createObjectURL(b));else setTopo(c.toDataURL('image/webp',.8))},'image/webp',.8);else setTopo(c.toDataURL('image/webp',.8))};
+    if(typeof Worker!=='function'||typeof OffscreenCanvas!=='function'||!OffscreenCanvas.prototype.convertToBlob){onPage();return}
+    try{const src=URL.createObjectURL(new Blob([`const topo=${topo};onmessage=()=>{const c=new OffscreenCanvas(1400,900);topo(c.getContext('2d'));`+
+        `c.convertToBlob({type:'image/webp',quality:.8}).then(b=>postMessage(b),()=>postMessage(null))}`],{type:'text/javascript'})),w=new Worker(src);
+      const done=()=>{w.terminate();URL.revokeObjectURL(src)};
+      w.onmessage=e=>{done();if(e.data)setTopo(URL.createObjectURL(e.data));else onPage()};w.onerror=e=>{e.preventDefault();done();onPage()};w.postMessage(0)}
+    catch(e){onPage()}});
   function setSh(){sh=page.clientHeight||innerHeight;page.style.setProperty('--sh',sh+'px');layout()}
   function layout(){segs=[];if(mode==='select')return;let y=0;
     page.querySelector(`.dl-story[data-for="${mode}"]`).querySelectorAll('.seg').forEach(el=>{const h=Math.round((+el.dataset.len||1)*sh);el.style.height=h+'px';
@@ -2142,17 +2319,21 @@ const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),c
     d.cardTops(mode,tops)}
   addEventListener('resize',()=>{clearTimeout(page._rz);page._rz=setTimeout(()=>{if(current==='dl'){setSh();onScroll()}},120)});
   function setMode(m){mode=m;page.dataset.mode=m;page.dataset.bg=m;cardsReset();layout();buildTags();if(m!=='link')NETD.hide();if(m==='select')root.classList.remove('dl-staged')}
-  /* where the story is, measured at the middle of the screen */
-  function where(){const y=page.scrollTop+sh/2;for(const s of segs)if(y<s.top+s.h)return{type:s.type,k:s.k,t:clamp((y-s.top)/s.h),seg:s};return{type:'after',k:0,t:1,seg:null}}
+  /* where the story is, measured at the middle of the screen (the scroll position is read once per scroll, before anything is
+     written, so it never forces a layout) */
+  function where(){const top=page.scrollTop,y=top+sh/2;for(const s of segs)if(y<s.top+s.h)return{type:s.type,k:s.k,t:clamp((y-s.top)/s.h),seg:s,y:top};return{type:'after',k:0,t:1,seg:null,y:top}}
   let W0=null;
   function onScroll(){if(mode==='select'||!segs.length)return;const w=where();W0=w;const d=D();if(d)d.story({type:w.type,k:w.k,t:w.t});ui(w);cardsUi(w);if(mode==='link')NETD.update(w)}
   page.addEventListener('scroll',onScroll,{passive:true});
+  /* the progress line: text and styles are written only when they change (a text write on every scroll frame would make the
+     next read of the page's layout recompute it) */
+  const hn=hud.querySelector('.hn'),hbi=hud.querySelector('.hb i'),ht=hud.querySelector('.ht'),setText=(el,t)=>{if(el.textContent!==t)el.textContent=t};
   function ui(w){const isPart=w.type==='part'||w.type==='step',n=mode==='link'?7:8;
     root.classList.toggle('dl-staged',w.type!=='after');   // the frosted bottom edge would blur the progress line; not needed over the stage
     hud.classList.toggle('on',isPart&&w.t>.12&&w.t<.94);
-    if(isPart){hud.querySelector('.hn').textContent=`${pad2(w.k+1)} / ${pad2(n)}`;hud.querySelector('.hb i').style.transform=`scaleX(${((w.k+w.t)/n).toFixed(3)})`;
-      hud.querySelector('.ht').textContent=(w.seg.card||w.seg.el).querySelector('h3').textContent}
-    hud.style.setProperty('--tc',mode==='rover'?'#FF9F43':mode==='remote'?'#6E9BFF':'#4DE1FF');
+    if(isPart){setText(hn,`${pad2(w.k+1)} / ${pad2(n)}`);const tf=`scaleX(${((w.k+w.t)/n).toFixed(3)})`;if(hbi._tf!==tf){hbi._tf=tf;hbi.style.transform=tf}
+      setText(ht,(w.seg.card||w.seg.el).querySelector('h3').textContent)}
+    const tc=mode==='rover'?'#FF9F43':mode==='remote'?'#6E9BFF':'#4DE1FF';if(hud._tc!==tc){hud._tc=tc;hud.style.setProperty('--tc',tc)}
     const showParts=mode!=='link'&&((w.type==='explode'&&w.t>.55)||(w.type==='part'&&w.k===0&&w.t<.1));
     tags.classList.toggle('on',showParts)}
   /* labels: one per part on the taken-apart model */
@@ -2167,13 +2348,15 @@ const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),c
     if(mode==='select'){picks.forEach(b=>{const k=b.dataset.pick,a=d.anchor(k);if(!a)return;
         let bw,bh,x,y;if(k==='link'){const nar=w<560;bw=nar?132:Math.min(300,w*.3);bh=nar?74:130;x=a.x-bw/2;y=nar?a.y-bh/2-4:a.y+16}   // under the arc's crown
         else{const top=d.anchor(k+'Top')||{y:a.y-260};bh=Math.max(140,a.y-top.y+96);bw=Math.max(200,Math.min(w*.42,bh*1.15));x=a.x-bw/2;y=top.y-24}
-        x=clamp(x,6,w-bw-6);b.style.width=bw+'px';b.style.height=bh+'px';b.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`})}
+        x=clamp(x,6,w-bw-6);css(b,'width',bw+'px');css(b,'height',bh+'px');css(b,'transform',`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`)})}
     if(tags.classList.contains('on'))layTags(d,w,h)}
+  /* this runs on every 3D frame: a style is written only when its value changes, so a still camera costs no style or layout work */
+  function css(el,k,v){const c=el._css||(el._css={});if(c[k]===v)return;c[k]=v;if(k[0]==='-')el.style.setProperty(k,v);else el.style[k]=v}
   /* labels on the taken-apart model: the dot sits on the part and the pill beside it, on the side away from the middle of the
      screen. Pills that would touch are pushed apart up and down (by as much as they overlap, so they move smoothly while the
      camera does), and a thin line then joins a moved pill to its dot. */
   function layTags(d,w,h){const L=[],G=12,M=8,SP=5,TOP=72;
-    tagEls.forEach(t=>{const a=d.anchor(t.anchor);if(!a||!a.ok){t.el.style.opacity='0';return}t.el.style.opacity='';
+    tagEls.forEach(t=>{const a=d.anchor(t.anchor);if(!a||!a.ok){css(t.el,'opacity','0');return}css(t.el,'opacity','');
       if(!t.w){t.w=t.b.offsetWidth||120;t.h=t.b.offsetHeight||26}L.push({t,a,w:t.w,h:t.h,y:a.y-t.h/2})});
     const fits=(o,r)=>r?o.a.x+G+o.w<=w-M:o.a.x-G-o.w>=M;
     L.forEach(o=>{let r=o.t.side;if(r===undefined||Math.abs(o.a.x-w/2)>16)r=o.a.x>w/2;if(!fits(o,r)&&fits(o,!r))r=!r;   // near the middle a label keeps its side
@@ -2184,8 +2367,8 @@ const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),c
       for(let i=0;i<L.length;i++)for(let j=i+1;j<L.length;j++){const p=L[i],q=L[j];if(!hit(p,q))continue;const k=(p.y+p.h+SP-q.y)/2+.25;p.y-=k;q.y+=k;moved=true}
       L.forEach(o=>o.y=clamp(o.y,TOP,h-M-o.h));if(!moved)break}
     L.forEach(o=>{const t=o.t,ex=o.r?o.x:o.x+o.w,ey=o.y+o.h/2,lx=ex-o.a.x,ly=ey-o.a.y,far=Math.abs(ly)>2||Math.abs(Math.abs(lx)-G)>2;t.side=o.r;
-      t.el.style.transform=`translate(${o.x.toFixed(1)}px,${o.y.toFixed(1)}px)`;t.i.style.transform=`translate(${(o.a.x-o.x).toFixed(1)}px,${(o.a.y-o.y).toFixed(1)}px)`;
-      t.i.style.setProperty('--ll',far?Math.hypot(lx,ly).toFixed(1)+'px':'0px');t.i.style.setProperty('--la',Math.atan2(ly,lx).toFixed(3)+'rad')})}
+      css(t.el,'transform',`translate(${o.x.toFixed(1)}px,${o.y.toFixed(1)}px)`);css(t.i,'transform',`translate(${(o.a.x-o.x).toFixed(1)}px,${(o.a.y-o.y).toFixed(1)}px)`);
+      css(t.i,'--ll',far?Math.hypot(lx,ly).toFixed(1)+'px':'0px');css(t.i,'--la',Math.atan2(ly,lx).toFixed(3)+'rad')})}
   /* the pick screen: hover, focus and arrow keys pick an object, Enter or a click opens it */
   function setHot(k){hot=k;picks.forEach(b=>b.classList.toggle('hot',b.dataset.pick===k));sel.classList.toggle('has-hot',!!k);const d=D();if(d)d.hover(k)}
   picks.forEach(b=>{const k=b.dataset.pick;b.addEventListener('pointerenter',()=>setHot(k));b.addEventListener('pointerleave',()=>{if(hot===k&&document.activeElement!==b)setHot(null)});
@@ -2214,7 +2397,7 @@ const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),c
     const o=pp,n=page,Z=SPR.zoom,Dur=reduce?1:Z.ms,cT=card.querySelector('.pj-t');saved=o.scrollTop;
     const d=D();if(d)d.cardHover(false);
     n.style.zIndex=3;n.scrollTop=0;setMode('select');n.style.opacity='0';n.classList.add('warm');setSh();setHot(null);
-    LBL='DataLink Rover';setLabel(LBL);islandTo(closedLay(),{spr:SPR.size});DROP.tip('Projects');
+    TH.page('dl');LBL='DataLink Rover';setLabel(LBL);islandTo(closedLay(),{spr:SPR.size});DROP.tip('Projects');
     if(reduce){if(d){d.mount(slot);d.go('select',{dur:0})}n.style.opacity='';n.classList.add('active');n.classList.remove('warm');n.style.zIndex='';o.classList.remove('active');current='dl';busy=false;PROJ.vis();DROP.show();return}
     root.classList.add('hush');
     const lab=[sel.querySelector('.sel-k'),sel.querySelector('.sel-s'),...picks.map(b=>b.querySelector('.pk-l')),sel.querySelector('.sel-help')];
@@ -2222,7 +2405,7 @@ const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),c
     const clk={v:null},cs=cslot.getBoundingClientRect();
     fly.classList.add('on');
     /* the controller, the link and the floor start "below zero", so they stay hidden until the rover is well on its way */
-    if(d){d.lowRes(Dur+400);d.mount(fly);d.keep(Dur+900);d.go('select',{dur:Dur,from:{...d.cardPose(cs),mV:-.6,lV:-.9,lP:-.9,pad:-.8,floor:-.6},ease:Z.f,clock:clockOf(clk)})}
+    if(d){d.lowRes(Dur+400,true);d.mount(fly);d.keep(Dur+900);d.go('select',{dur:Dur,from:{...d.cardPose(cs),mV:-.6,lV:-.9,lP:-.9,pad:-.8,floor:-.6},ease:Z.f,clock:clockOf(clk)})}
     await frames2();                                   // the new page lays out (invisible) and the 3D view draws once in its layer
     const ct=cT.getBoundingClientRect(),tf=selT.getBoundingClientRect(),k=parseFloat(getComputedStyle(selT).fontSize)/parseFloat(getComputedStyle(cT).fontSize);
     const g=ghost(cT,ct);cT.style.visibility='hidden';
@@ -2241,7 +2424,7 @@ const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),c
      into the list (from the pick screen; from a story it simply fades in with the list). */
   async function leave(){if(busy||menuOpen||current!=='dl')return;busy=true;
     const o=page,n=pp,Z=SPR.unzoom,Dur=reduce?1:Z.ms,cT=card.querySelector('.pj-t'),fromSel=mode==='select';
-    DROP.hide();LBL='Projects';setLabel(LBL);islandTo(closedLay(),{spr:SPR.size});setHot(null);tags.classList.remove('on');hud.classList.remove('on');cardsOut();
+    DROP.hide();TH.page('projects');LBL='Projects';setLabel(LBL);islandTo(closedLay(),{spr:SPR.size});setHot(null);tags.classList.remove('on');hud.classList.remove('on');cardsOut();
     n.style.zIndex=1;n.style.opacity='0';n.classList.add('warm');n.scrollTop=saved;o.style.zIndex=3;
     if(reduce){n.style.opacity='';o.classList.remove('active');n.classList.add('active');n.classList.remove('warm');n.style.zIndex=o.style.zIndex='';current='projects';reset();PROJ.prep(n);busy=false;return}
     root.classList.add('hush');
@@ -2249,7 +2432,7 @@ const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),c
     const cs=cslot.getBoundingClientRect(),ct=cT.getBoundingClientRect(),tf=selT.getBoundingClientRect(),k=parseFloat(getComputedStyle(cT).fontSize)/parseFloat(getComputedStyle(selT).fontSize);
     const d=D(),clk={v:null};
     fly.classList.add('on');
-    if(d){d.lowRes(Dur+400);d.mount(fly);d.keep(Dur+900);d.go('card',{dur:Dur,goal:{...d.cardPose(cs),mV:-1.3,lV:-1.5,lP:0,pad:-1.2,floor:-1},ease:Z.f,clock:clockOf(clk)})}
+    if(d){d.lowRes(Dur+400,true);d.mount(fly);d.keep(Dur+900);d.go('card',{dur:Dur,goal:{...d.cardPose(cs),mV:-1.3,lV:-1.5,lP:0,pad:-1.2,floor:-1},ease:Z.f,clock:clockOf(clk)})}
     const fade=[...sel.querySelectorAll('.sel-k,.sel-s,.pk-l,.sel-help'),...o.querySelectorAll('.dl-story,.dl-ttl,.dl-cue,.dl-cards')];
     fade.forEach(el=>el.animate([{opacity:getComputedStyle(el).opacity},{opacity:0}],{duration:200,fill:'forwards'}));
     const opt={duration:Dur,easing:Z.e,fill:'both'},soft='cubic-bezier(.4,0,.2,1)';let g=null;
@@ -2292,6 +2475,116 @@ const DL=(()=>{const page=$('#pg-dl'),pp=$('#pg-projects'),card=$('#pj-rover'),c
   if(window.DL3D)DL3D.onFrame(place);
   return{enter,leave,pick,unpick,back,reset,get mode(){return mode},get level(){return current!=='dl'?0:mode==='select'?1:2}}})();
 
+/* ---------- ambient light: the textures and particles of .abg (see its CSS) ----------
+   Each page's layer is filled once: three pools (the page's colour, its neighbour in the spectrum, the season's tint) and
+   its signature motion, each drawn once into a small canvas that the GPU stretches; then the season's particles, as many as
+   the quality tier allows. The home page's layer is filled at once (it is under the intro), the others in idle time.
+   Nothing here runs again unless the tier changes. */
+const AMBIENT=(()=>{const boxes=[...document.querySelectorAll('.abg')],rgb=h=>[1,3,5].map(i=>parseInt(h.trim().slice(i,i+2),16));
+  const tex=(w,h,draw,cls)=>{const c=document.createElement('canvas');c.width=w;c.height=h;c.className=cls;const g=c.getContext('2d');if(g)draw(g,w,h);return c};
+  /* a soft round pool of light: close to a gaussian, and nothing at its edge */
+  const pool=(c,a,cls)=>tex(192,192,(g,w)=>{const r=w/2,gr=g.createRadialGradient(r,r,0,r,r,r);
+    for(let i=0;i<=12;i++){const t=i/12;gr.addColorStop(t,`rgba(${c},${(a*Math.exp(-3.2*t*t)*(1-t*t)).toFixed(4)})`)}g.fillStyle=gr;g.fillRect(0,0,w,w)},cls);
+  /* Home: the spectrum, page by page, in a band that fades out at its edges */
+  const band=()=>tex(512,64,(g,w,h)=>{const C=PAGES.map(p=>p.col),lg=g.createLinearGradient(0,0,w,0);
+    lg.addColorStop(0,`rgba(${rgb(C[0])},0)`);C.forEach((c,i)=>lg.addColorStop(.1+i*.8/(C.length-1),c));lg.addColorStop(1,`rgba(${rgb(C[C.length-1])},0)`);
+    g.fillStyle=lg;g.fillRect(0,0,w,h);g.globalCompositeOperation='destination-in';const v=g.createLinearGradient(0,0,0,h);
+    [[0,0],[.18,.08],[.34,.45],[.5,1],[.66,.45],[.82,.08],[1,0]].forEach(([o,a])=>v.addColorStop(o,`rgba(0,0,0,${a})`));g.fillStyle=v;g.fillRect(0,0,w,h)},'ab-band');
+  /* Record: uneven rays fanning out of the top left corner over a quarter turn, fading with distance */
+  const rays=c=>tex(256,256,(g,w)=>{const cg=g.createConicGradient(0,0,0);
+    for(let i=0;i<=72;i++){const u=i/72,k=Math.max(0,.55*Math.sin(u*Math.PI*9.3+.6)+.45*Math.sin(u*Math.PI*4.1+2.1));cg.addColorStop(u*.25,`rgba(${c},${(.55*k*k*Math.sqrt(Math.sin(u*Math.PI))).toFixed(4)})`)}
+    cg.addColorStop(.26,`rgba(${c},0)`);cg.addColorStop(1,`rgba(${c},0)`);g.fillStyle=cg;g.fillRect(0,0,w,w);
+    g.globalCompositeOperation='destination-in';const rg=g.createRadialGradient(0,0,0,0,0,w);rg.addColorStop(0,'rgba(0,0,0,.95)');rg.addColorStop(.4,'rgba(0,0,0,.6)');rg.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=rg;g.fillRect(0,0,w,w)},'ab-rays');
+  /* About: an aurora ribbon, its curtain trailing upward, from one colour to the other */
+  const wave=(a,b,seed,cls)=>tex(256,96,(g,w,h)=>{const im=g.createImageData(w,h),d=im.data,A=rgb(a),B=rgb(b);
+    for(let x=0;x<w;x++){const u=x/(w-1),cy=h*(.56+.15*Math.sin(u*7.2+seed)+.06*Math.sin(u*17+seed*1.7)),th=h*(.1+.04*Math.sin(u*11+seed*2.3)),
+        env=Math.pow(Math.sin(u*Math.PI),1.4)*(.72+.28*Math.sin(u*41+seed*3));
+      for(let y=0;y<h;y++){const v=(y-cy)/th,k=Math.exp(-v*v/(y<cy?3.2:1))*env,i=(y*w+x)*4;
+        d[i]=A[0]+(B[0]-A[0])*u;d[i+1]=A[1]+(B[1]-A[1])*u;d[i+2]=A[2]+(B[2]-A[2])*u;d[i+3]=Math.min(255,k*190)}}
+    g.putImageData(im,0,0)},cls);
+  /* Contact: a soft ring, three of them spreading out in turn */
+  /* Projects: the scanner's beam, soft across and fading out at both ends */
+  const beam=c=>tex(128,128,(g,w,h)=>{const lg=g.createLinearGradient(0,0,w,0);
+    [[0,0],[.25,.08],[.4,.42],[.5,.8],[.6,.42],[.75,.08],[1,0]].forEach(([o,a])=>lg.addColorStop(o,`rgba(${c},${a})`));g.fillStyle=lg;g.fillRect(0,0,w,h);
+    g.globalCompositeOperation='destination-in';const v=g.createLinearGradient(0,0,0,h);[[0,0],[.25,1],[.75,1],[1,0]].forEach(([o,a])=>v.addColorStop(o,`rgba(0,0,0,${a})`));
+    g.fillStyle=v;g.fillRect(0,0,w,h)},'ab-scan');
+  const ring=(c,cls)=>tex(192,192,(g,w)=>{const r=w/2,gr=g.createRadialGradient(r,r,0,r,r,r);
+    [[0,0],[.6,0],[.74,.2],[.8,.5],[.85,.2],[.93,.05],[1,0]].forEach(([o,a])=>gr.addColorStop(o,`rgba(${c},${a})`));g.fillStyle=gr;g.fillRect(0,0,w,w)},cls);
+  /* the season's particles: count, size (px), fall time (s), sway (px), turn (deg), opacity; scaled down by the tier */
+  const FX={snow:[16,3,7,11,19,14,34,0,.8],ember:[12,4,8,9,15,10,26,0,.9],spark:[12,3,6,2.4,4.6,0,0,0,.9],confetti:[14,6,10,8,13,12,30,220,.85],
+    petal:[9,7,11,13,20,24,48,160,.75],martisor:[10,4,7,12,18,12,26,0,.8],mote:[12,3,5,14,22,16,40,0,.7],leaf:[8,8,12,12,18,30,60,300,.8]};
+  function particles(box){const old=box.querySelector('.sfx');if(old)old.remove();const f=FX[SEASON.fx];if(reduce||!f)return;
+    const n=Math.round(f[0]*[1,.65,.35,0][TIER.t]);if(!n)return;
+    const s=document.createElement('div'),R=(a,b)=>a+Math.random()*(b-a);s.className='sfx';s.dataset.fx=SEASON.fx;
+    for(let k=0;k<n;k++){const i=document.createElement('i'),d=R(f[3],f[4]);i.appendChild(document.createElement('b'));
+      i.style.cssText=`--x:${((k+R(.1,.9))/n*100).toFixed(1)}vw;--y:${R(6,88).toFixed(1)}vh;--d:${d.toFixed(2)}s;--dl:${(-R(0,d)).toFixed(2)}s;--z:${R(f[1],f[2]).toFixed(1)}px;`+
+        `--sw:${R(f[5],f[6]).toFixed(0)}px;--sd:${R(2.6,5.2).toFixed(2)}s;--r:${R(f[7]*.4,f[7]).toFixed(0)}deg;--o:${R(f[8]*.55,f[8]).toFixed(2)};--c:${SEASON.cols[k%SEASON.cols.length]}`;
+      s.appendChild(i)}
+    box.appendChild(s)}
+  function build(box){if(box.dataset.built)return;box.dataset.built='1';
+    const pc=getComputedStyle(box.closest('.page')).getPropertyValue('--pc').trim()||'#FFFFFF',i=PAGES.findIndex(p=>p.col.toLowerCase()===pc.toLowerCase()),
+      nb=(PAGES[i+1]||PAGES[0]).col,kind=box.dataset.abg,c=rgb(pc).join(','),n=rgb(nb).join(',');
+    box.append(pool(c,.24,'ab-p p1'),pool(n,.2,'ab-p p2'),pool(rgb(SEASON.tint[0]).join(','),.2,'ab-p p3'));
+    if(kind==='spectrum')box.append(band());
+    else if(kind==='rays'&&window.CanvasRenderingContext2D&&CanvasRenderingContext2D.prototype.createConicGradient)box.append(rays(c));
+    else if(kind==='waves')box.append(wave(pc,nb,1.3,'ab-wave w1'),wave(nb,pc,4.2,'ab-wave w2'));
+    else if(kind==='rings')box.append(...['r1','r2','r3'].map(k=>ring(c,'ab-ring '+k)));
+    else if(kind==='scan'){const grid=document.createElement('div');grid.className='ab-grid';box.append(grid,beam(rgb(pc).map(v=>Math.round(v+(255-v)*.35)).join(',')))}
+    TH.back(box);particles(box)}
+  function start(){const home=boxes.filter(b=>b.closest('#pg-home'));
+    requestAnimationFrame(()=>setTimeout(()=>home.forEach(build)));   // right after the first frame (the curtain), well before it lifts
+    idleEach(boxes.filter(b=>!home.includes(b)),build)}
+  TIER.on(()=>boxes.forEach(b=>{if(b.dataset.built)particles(b)}));
+  return{start}})();
+
+/* ---------- pace: does the device keep up with the moving background? ----------
+   Right after a page with ambient light is shown, about 90 frames are timed (only then; no loop runs otherwise). If the
+   median frame is slow, the quality steps down a tier, as it does when the light drops frames; two tiers down, the
+   background holds still. */
+const PACE=(()=>{let last=-1e9;
+  function check(){if(reduce||TIER.t>=2||performance.now()-last<20000)return;last=performance.now();const ts=[];let p=0;
+    const verdict=()=>{if(ts.length<60||busy||menuOpen)return;ts.sort((a,b)=>a-b);if(ts[ts.length>>1]>22)TIER.set(TIER.t+1)};
+    const f=t=>{if(p)ts.push(t-p);p=t;if(ts.length<90&&!document.hidden&&!busy&&!menuOpen)requestAnimationFrame(f);else verdict()};
+    setTimeout(()=>requestAnimationFrame(f),600)}   // once the page has settled
+  return{check}})();
+
+/* ---------- the first look, once per page load ----------
+   Nothing is stored: the intro simply belongs to loading the page. The name fades in on black while a line of spectrum
+   draws under it, then the black lifts, the name glides into its place as the title, and the page comes in piece by piece:
+   the island, the line under the name, then the panels one after another. It is all set up at once as compositor animations
+   with delays, so a busy start-up (the light, the 3D) never makes it stutter or wait. Any key, click, tap or scroll hurries
+   it along; with reduced motion there is none. */
+const INTRO=(()=>{const cur=$('#intro');let A=[],done=!cur;
+  const hold=cur?island.animate([{opacity:0},{opacity:0}],{duration:1,fill:'forwards'}):null;   // the island waits for its turn
+  async function run(){const home=pageEl('home');
+    if(done||reduce){if(cur)cur.remove();if(hold)hold.cancel();done=true;revealContent(home);TH.reveal(reduce?0:400);return}
+    const h1=home.querySelector('h1.ttl'),tt=h1.querySelector('.tt'),line=cur.querySelector('.in-line');
+    home.classList.add('pre');h1.style.visibility='hidden';
+    await Promise.race([document.fonts?document.fonts.ready:Promise.resolve(),sleep(1500)]);   // the name in its own font from its first frame
+    /* the name is a copy of the title, laid out at the title's place and width (so it wraps the same), first shown centred */
+    const cs=getComputedStyle(h1),b=tt.getBoundingClientRect(),rg=document.createRange();rg.selectNodeContents(tt);const tr=rg.getBoundingClientRect();
+    const s0=Math.min(.92,innerWidth*.84/tr.width),dx=innerWidth/2-(tr.left+tr.width/2),dy=innerHeight*.46-(tr.top+tr.height/2),start=`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${s0.toFixed(4)})`;
+    const copy=blur=>{const g=document.createElement('div');g.className='in-ghost';g.textContent=tt.textContent;
+      Object.assign(g.style,{left:b.left+'px',top:b.top+'px',width:b.width+'px',fontFamily:cs.fontFamily,fontSize:cs.fontSize,fontWeight:cs.fontWeight,letterSpacing:cs.letterSpacing,
+        lineHeight:cs.lineHeight,color:cs.color,transformOrigin:`${(tr.left+tr.width/2-b.left).toFixed(1)}px ${(tr.top+tr.height/2-b.top).toFixed(1)}px`,transform:start});
+      if(cs.textWrap)g.style.textWrap=cs.textWrap;if(blur)g.style.filter='blur(14px)';document.body.appendChild(g);return g};
+    const g=copy(false),gb=copy(true),Z=SPR.zoom,HOLD=1650;line.style.top=(innerHeight*.46+tr.height*s0/2+26).toFixed(1)+'px';
+    const an=(el,kf,o)=>{const a=el.animate(kf,{fill:'both',...o});A.push(a);return a};
+    an(gb,[{opacity:0},{opacity:.9,offset:.4},{opacity:0}],{duration:1300,easing:'ease-in-out'});   // a blurred copy brings the name into focus
+    an(g,[{opacity:0},{opacity:1}],{duration:1050,delay:250,easing:OUT});
+    an(line,[{transform:'translateX(-50%) scaleX(0)'},{transform:'translateX(-50%) scaleX(1)'}],{duration:900,delay:450,easing:OUT});
+    an(line,[{opacity:1},{opacity:0}],{duration:450,delay:HOLD,easing:IN});
+    const glide=an(g,[{transform:start},{transform:'none'}],{duration:Z.ms,delay:HOLD,easing:Z.e}),lift=an(cur,[{opacity:1},{opacity:0}],{duration:800,delay:HOLD+60,easing:EASE});
+    hold.cancel();an(island,[{opacity:0,translate:'0 -14px'},{opacity:1,translate:'0 0'}],{duration:900,delay:HOLD+420,easing:OUT});
+    A.push(...revealContent(home,h1,{delay:HOLD+620,gap:115,dur:950}));
+    const evs=['pointerdown','keydown','wheel','touchstart'],hurry=()=>A.forEach(a=>{try{a.updatePlaybackRate(5)}catch(e){}});
+    evs.forEach(t=>addEventListener(t,hurry,{capture:true,passive:true}));
+    await Promise.all([glide.finished,lift.finished]).catch(()=>{});
+    done=true;h1.style.visibility='';g.remove();gb.remove();cur.remove();evs.forEach(t=>removeEventListener(t,hurry,{capture:true}));
+    A.forEach(a=>{if(a.effect&&a.effect.target===island)a.cancel()});A=[];TH.reveal(250);PACE.check()}
+  return{run,get on(){return !done}}})();
+
 /* ---------- boot ---------- */
 /* glass that bends what is behind it: project cards and the details sheet, and on the full tier the story cards over the 3D model */
 document.querySelectorAll('.pj.lq').forEach(el=>LQ.watch(el,{tier:1,sc:46,blur:3}));
@@ -2299,9 +2592,11 @@ document.querySelectorAll('.sc.lq').forEach(el=>LQ.watch(el,{tier:1,sc:56,blur:3
 LQ.watch($('.sh'),{tier:1,sc:50,blur:6});
 layout();LIGHT.start();LIGHT.setGeo();LIGHT.resize();layKey=innerWidth+'x'+innerHeight+'@'+(devicePixelRatio||1);
 TIER.on(()=>LIGHT.resize());
+TH.mount({id:SEASON.id,tier:TIER.t,reduce});TIER.on(t=>TH.tier(t));
 islandTo(closedLay(),{dur:0});
 orbsBox.style.visibility='hidden';
-revealContent(pageEl('home'));
+AMBIENT.start();
+INTRO.run();
 if(document.fonts)document.fonts.ready.then(()=>{if(!menuOpen&&!busy)islandTo(closedLay(),{dur:0});prepGlass();HOME.refract();if(!TOUCH)PROJ.load();LYR.measure()});else{prepGlass();HOME.refract();if(!TOUCH)PROJ.load();LYR.measure()}
 TIER.on(()=>HOME.refract());addEventListener('resize',()=>{clearTimeout(window._hr);window._hr=setTimeout(()=>HOME.refract(),300)});
 TIER.on(()=>{if(!menuOpen&&!busy)islandTo(closedLay(),{dur:0})});

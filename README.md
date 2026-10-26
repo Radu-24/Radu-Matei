@@ -10,6 +10,36 @@ My personal website: who I am, what I have built, and my thesis robot, the DataL
 - Plain HTML, CSS and JavaScript. There is no framework and no build step for the site itself.
 - The light in the background is drawn by `light.js` in a Web Worker, so it stays smooth while the page is busy. Browsers without workers or OffscreenCanvas draw it on the main thread instead.
 - The rover and its controller are real 3D models (three.js). The rover is built part by part to real dimensions, and the controller comes from its CAD file. The page loads light versions first. On devices that can handle more, it swaps in detailed versions, and it switches back if the frame rate drops.
+- Every page has a moving background of soft light (`.abg` in `index.html`), except a project's own page, which has a background made for it. Pools in the page's colour drift behind the content, plus one motion per page. Home has a band of spectrum, Projects has a beam of light scanning a dot grid, Record has rays, About has aurora ribbons and Contact has signal rings. The shapes are small canvases that the graphics card stretches and moves, so the page does no work while they animate. Weaker devices keep the still background.
+- The first time the page loads, the name fades in on black and glides into place, then the page comes in piece by piece. It plays on every page load and stores nothing.
+- The look follows the time of year (see below).
+
+## The time of year
+
+The visitor's own calendar picks a theme: an event while one is on, otherwise the season. Each theme dresses the site in three places:
+
+- **The edges of the screen**: pieces in the corners or along the top, over the page.
+- **The scene**: pictures in the background of every page, behind the content.
+- **The island**: something sits on it or hangs from it. It steps aside when the menu opens, and opening the menu throws a handful of the theme out of the island.
+
+The ambient light also takes on the theme's colour and particles. A project's own page keeps its own look, so none of this shows there. Nothing is stored or sent.
+
+| Theme | When | Edges | Scene | Island | Opening the menu |
+|---|---|---|---|---|---|
+| New Year | 30 Dec – 2 Jan | gold and silver stars on threads | fireworks | sparkles | a burst of sparks |
+| My birthday | 21 – 27 Jan | bunting in the page colours | balloons rising | a party hat | confetti |
+| Mărțișor | 1 – 9 March | the red and white cord with a heart | snowdrops | a little mărțișor hanging from it | red and white petals |
+| Easter (Orthodox) | the week before Easter Sunday to Easter Monday | painted eggs on ribbons | painted eggs in the grass | bunny ears peeking out | petals and eggs |
+| Halloween | 17 Oct – 1 Nov | cobwebs, a spider letting itself down | the moon, bats, jack-o'-lanterns | a spider on a thread | bats |
+| Christmas | 1 Dec – 7 Jan | a string of lights | snowy hills and firs | snow and holly | snow |
+| Spring | March to May | a blossom branch | butterflies | a butterfly, which flies off | petals |
+| Summer | June to August | | a sunset between palm trees | a little palm tree | sparkles |
+| Autumn | September to November | a branch in autumn colours | fallen leaves | a maple leaf, which blows away | leaves |
+| Winter | December to February | icicles | snowy hills and firs | snow and icicles | snow |
+
+The pictures are drawn once and only moved by the graphics card, the same way as the ambient light, and they hold still on the lighter quality tiers and with reduced motion. To preview a theme, add `?season=` to the address with one of `halloween`, `xmas`, `newyear`, `birthday`, `easter`, `martisor`, `spring`, `summer`, `autumn` or `winter`. The dates and colours are in `SEASON` in `index.html`, and the pictures are in `assets/js/themes.js`.
+
+To give a new page the moving background, add `<div class="abg" data-abg="pools" aria-hidden="true"></div>` right after its `.pbg`. Use `pools` for the pools alone, or `spectrum`, `scan`, `rays`, `waves` or `rings` for one of the motions. The colours come from the page's `--pc`.
 
 ![The DataLink Rover in 3D](docs/rover.jpg)
 
@@ -23,7 +53,7 @@ site/                    the website; this folder is what gets published
 ├── sitemap.xml          the site's address for search engines (radumatei.ro)
 ├── favicon.ico          tab icon for browsers and crawlers that ask for /favicon.ico
 └── assets/
-    ├── js/              light.js (background light), datalink-3d.js (3D viewer), tab-icon.js (animated tab icon)
+    ├── js/              light.js (background light), datalink-3d.js (3D viewer), themes.js (time of year), tab-icon.js (animated tab icon)
     ├── models/          packed 3D models and their texture, built by tools/
     ├── vendor/three/    three.js 0.160.0, served from the site
     ├── css/fonts.css    the two fonts, embedded, served from the site

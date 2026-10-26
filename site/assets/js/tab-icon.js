@@ -3,22 +3,19 @@
    - When you switch away, the colours stop and the prism turns. Browsers wake background tabs about once a second,
      so there it turns in steps, like a clock hand; in a visible but unfocused window it turns smoothly.
    - With "reduce motion" switched on, or where the browser ignores icon changes, the static favicon.svg stays.
-   It redraws a 64 px canvas a few times a second at most, which costs next to nothing. */
+   It redraws a 64 px canvas a few times a second at most, which costs next to nothing.
+   The frames are drawn in a worker (this same file, on an OffscreenCanvas) and only the finished picture comes back: reading
+   a canvas back on the page (toDataURL) makes the page wait for the graphics card to finish everything queued before it, the
+   3D view and the light included, which stutters them. Browsers without canvases in workers draw it on the page, as before. */
 (() => {
-  const link = document.getElementById('tab-icon');
-  if (!link || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const S = 64, cv = document.createElement('canvas'); cv.width = cv.height = S;
-  const g = cv.getContext('2d'); if (!g) return;
+  const S = 64;
   const COLS = ['#FF5A6A', '#FF9F43', '#FFE14D', '#5CF59A', '#4DC8FF', '#9B7BFF'].map(h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)));
   const R = 22, V = [[0, -R], [R * .866, R / 2], [-R * .866, R / 2]];          // triangle around its centre
-  const TURN = 45 * Math.PI / 180;                                              // 45 degrees a second: never a multiple of 120, so each step looks like a turn
-  let hue = 0, ang = 0, last = performance.now(), timer = 0;
-
   const col = k => { const n = COLS.length, i = Math.floor(k) % n, f = k - Math.floor(k), a = COLS[i], b = COLS[(i + 1) % n];
     return `rgb(${a.map((v, j) => Math.round(v + (b[j] - v) * f)).join(',')})` };
-  const active = () => !document.hidden && document.hasFocus();
 
-  function draw(on) {
+  /* one frame of the icon */
+  function paint(g, hue, ang, on) {
     g.clearRect(0, 0, S, S);
     g.beginPath(); g.roundRect(2, 2, 60, 60, 15); g.fillStyle = '#0B0D14'; g.fill();
     g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,.14)'; g.stroke();
@@ -30,6 +27,41 @@
     edge.addColorStop(0, col(hue)); edge.addColorStop(.5, col(hue + 2)); edge.addColorStop(1, col(hue + 4));
     g.globalAlpha = on ? 1 : .8; g.lineWidth = 4.5; g.lineJoin = 'round'; g.strokeStyle = edge; g.stroke();
     g.restore();
+  }
+
+  /* in the worker: draw the frame it is sent, encode it there, send the picture back */
+  if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
+    const oc = new OffscreenCanvas(S, S), g = oc.getContext('2d');
+    self.onmessage = e => { const m = e.data; paint(g, m.hue, m.ang, m.on);
+      oc.convertToBlob({type: 'image/png'}).then(b => self.postMessage(b), () => self.postMessage(null)) };
+    return;
+  }
+
+  const link = document.getElementById('tab-icon');
+  if (!link || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const TURN = 45 * Math.PI / 180;                                              // 45 degrees a second: never a multiple of 120, so each step looks like a turn
+  let hue = 0, ang = 0, last = performance.now(), timer = 0;
+  const active = () => !document.hidden && document.hasFocus();
+
+  /* where frames are drawn: in the worker when the browser can, on the page otherwise (or if the worker fails) */
+  let worker = null, waiting = false, cv = null, g = null;
+  const onPage = () => { if (worker) { try { worker.terminate() } catch (e) {} worker = null } waiting = false;
+    if (!cv) { cv = document.createElement('canvas'); cv.width = cv.height = S; g = cv.getContext('2d') } };
+  const src = document.currentScript && document.currentScript.src;
+  try {
+    if (src && typeof Worker === 'function' && typeof OffscreenCanvas === 'function' && OffscreenCanvas.prototype.convertToBlob) {
+      worker = new Worker(src);
+      worker.onmessage = e => { if (!e.data) { onPage(); return }
+        const r = new FileReader(); r.onload = () => { link.href = r.result; waiting = false }; r.onerror = () => { waiting = false }; r.readAsDataURL(e.data) };
+      worker.onerror = e => { e.preventDefault(); onPage() };
+    }
+  } catch (e) { worker = null }
+  if (!worker) onPage();
+
+  function draw(on) {
+    if (worker) { if (!waiting) { waiting = true; worker.postMessage({hue, ang, on}) } return }   // a frame still on its way: this one is skipped
+    if (!g) return;
+    paint(g, hue, ang, on);
     link.href = cv.toDataURL('image/png');
   }
   function tick() {

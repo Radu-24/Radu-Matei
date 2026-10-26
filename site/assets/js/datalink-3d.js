@@ -33,7 +33,8 @@ const fitD=(r,fov,fill)=>{const f=(H/2)/tanH(fov),m=Math.min(W,H);return f*2*r/(
 let rover=null,remote=null,link=null,floorM=null,padR=null,padM=null,lights={},atlas=null;
 const CT={};   /* on a tall screen: where each part's card starts (fraction of the height), so the part can sit above it */
 const v3=()=>new T.Vector3();
-function partsOf(root){const out=[];root.children.forEach(g=>{if(g.userData&&g.userData.key)out.push(g)});return out}
+/* the parts never change once a model is built: listed once, not on every frame (less garbage, fewer collector pauses) */
+function partsOf(root){return root.userData.partList||(root.userData.partList=root.children.filter(g=>g.userData&&g.userData.key))}
 /* every part gets its own copies of its materials, so it can be dimmed or faded on its own */
 function ownMaterials(part){const map=new Map(),list=[];
   part.traverse(o=>{if(!o.isMesh)return;const one=m=>{if(!map.has(m)){const c=m.clone();map.set(m,c);list.push({m:c,c:c.color.clone(),e:c.emissiveIntensity||0,o:c.opacity,env:c.envMapIntensity??1,keepT:!!m.userData.keepT})}return map.get(m)};
@@ -48,7 +49,7 @@ function shade(part,d,vis){const u=part.userData;if(Math.abs(u.lastD-d)<.003&&Ma
 function stopBox(root,keys,ex=1){const b=new T.Box3(),tmp=new T.Box3();
   root.updateMatrixWorld(true);const inv=root.matrixWorld.clone().invert();
   keys.forEach(k=>{const g=root.userData.parts[k];if(!g)return;const keep=g.position.clone();g.position.copy(g.userData.base).addScaledVector(g.userData.off,ex);g.updateMatrixWorld(true);
-    g.traverse(o=>{if(o.isMesh&&o.visible&&!o.isInstancedMesh){o.geometry.computeBoundingBox();tmp.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld).applyMatrix4(inv);b.union(tmp)}});g.position.copy(keep)});
+    g.traverse(o=>{if(o.isMesh&&o.visible&&!o.isInstancedMesh){if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();tmp.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld).applyMatrix4(inv);b.union(tmp)}});g.position.copy(keep)});
   root.updateMatrixWorld(true);const c=b.getCenter(v3()),s=b.getSize(v3());return{c,r:Math.max(.2,s.length()/2),lo:b.min.clone(),hi:b.max.clone()}}
 /* where a stop's label points, taken apart (t) and put together (t0): the middle of its parts, or of the parts in s.tag,
    or the point s.at inside that box (fractions of its size) */
@@ -67,16 +68,21 @@ function matFor(cls,uv){const key=cls+(uv?'+t':'');if(matCache.has(key))return m
    per mesh: int16 positions (x, y, z runs), then either one byte of occlusion per vertex (the mesh has one colour) or sRGB
    colours, then optional atlas uv (uint16), then indices. Normals are rebuilt here (vertices are already split at sharp edges). */
 let LUT=null;
+/* give the page a turn (a frame, a tap) between meshes once a few milliseconds have gone by, so unpacking a model never holds
+   the page for long; scheduler.yield where the browser has it, a task otherwise */
+const pause=()=>window.scheduler&&scheduler.yield?scheduler.yield():new Promise(r=>setTimeout(r,0));
+const b64=s=>{if(Uint8Array.fromBase64)try{return Uint8Array.fromBase64(s)}catch(e){}   // native decoder where there is one
+  const a=atob(s),u=new Uint8Array(a.length);for(let i=0;i<a.length;i++)u[i]=a.charCodeAt(i);return u};
 async function unpack(M,slow){
   if(!M||!M.data)throw new Error('no model data');
-  const s=atob(M.data),u8=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u8[i]=s.charCodeAt(i);
+  const u8=b64(M.data);
   let buf=u8.buffer;
   if(M.gz){if(typeof DecompressionStream!=='function')throw new Error('this browser cannot unpack the model (no DecompressionStream)');
     buf=await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()}
   if(!LUT){LUT=new Float32Array(256);for(let i=0;i<256;i++){const c=i/255;LUT[i]=c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4)}}
   return M.v>=4?unpack4(M,new Uint8Array(buf),slow):unpack3(M,buf)}
 /* v4: delta-coded varints in triangle order (see pack.py) */
-async function unpack4(M,B,slow){let p=0;const out=[];
+async function unpack4(M,B,slow){let p=0,t0=performance.now();const out=[];
   const vint=()=>{let x=0,sh=0,b;do{b=B[p++];x+=(b&127)*2**sh;sh+=7}while(b&128);return x};
   for(const m of M.meshes){const n=m.v,P=new Float32Array(n*3),C=new Float32Array(n*3);
     for(let c=0;c<3;c++){const lo=m.lo[c],sc=m.s||(m.hi[c]-m.lo[c])/65534,o=m.s?0:32767;let q=0;
@@ -90,7 +96,7 @@ async function unpack4(M,B,slow){let p=0;const out=[];
     const I=n>65535?new Uint32Array(m.i):new Uint16Array(m.i);let hw=0;
     for(let k=0;k<m.i;k++){const cd=vint();I[k]=hw-cd;if(cd===0)hw++}
     g.setIndex(new T.BufferAttribute(I,1));g.computeVertexNormals();
-    out.push({name:m.n,part:m.p,mat:m.m,uv:!!m.uv,g});if(slow)await new Promise(r=>setTimeout(r,0))}
+    out.push({name:m.n,part:m.p,mat:m.m,uv:!!m.uv,g});if(performance.now()-t0>(slow?4:8)){await pause();t0=performance.now()}}
   return out}
 function unpack3(M,buf){
   let off=0;const al=()=>{off=(off+3)&~3},out=[];
@@ -435,13 +441,13 @@ const LOD={lo:{},hi:{},ready:{},level:'lo',watch:null,timer:0,off:false,started:
 function maybeHi(){if(LOD.started||LOD.off||tier>1||matchMedia('(pointer:coarse)').matches||!remote||/[?&]lod=lo/.test(location.search))return;LOD.started=true;setTimeout(()=>idle(loadHi),1200)}
 let lastMove=0;
 async function loadHi(){
-  try{const RM=await dataScript('assets/models/rover-hi.js','DL_ROVER_HI','dl-rover-hi');const rh=buildRover(await unpack(RM,true),RM);delete window.DL_ROVER_HI;LOD.ready.rover=rh;armSwap()}
+  try{const RM=await dataScript('assets/models/rover-hi.js','DL_ROVER_HI','dl-rover-hi'),ms=await unpack(RM,true);await calm();const rh=buildRover(ms,RM);delete window.DL_ROVER_HI;LOD.ready.rover=rh;armSwap()}
   catch(e){console.info('DataLink: detailed rover unavailable, keeping the light one',e)}
   await new Promise(r=>idle(r));
-  try{const MM=await dataScript('assets/models/remote-hi.js','DL_REMOTE_HI','dl-remote-hi');const mh=buildRemote(await unpack(MM,true),MM);delete window.DL_REMOTE_HI;LOD.ready.remote=mh;armSwap()}
+  try{const MM=await dataScript('assets/models/remote-hi.js','DL_REMOTE_HI','dl-remote-hi'),ms=await unpack(MM,true);await calm();const mh=buildRemote(ms,MM);delete window.DL_REMOTE_HI;LOD.ready.remote=mh;armSwap()}
   catch(e){console.info('DataLink: detailed controller unavailable, keeping the light one',e)}}
 function armSwap(){if(LOD.timer)return;LOD.timer=setInterval(()=>{if(LOD.off){clearInterval(LOD.timer);LOD.timer=0;return}
-  const calm=!shown||(!tw&&vt-lastMove>.35);if(!calm)return;
+  const still=!pageBusy()&&(!shown||(!tw&&vt-lastMove>.35));if(!still)return;
   const r=LOD.ready.rover,m=LOD.ready.remote;
   if(r){LOD.lo.rover=rover;put('rover',r);LOD.hi.rover=r;LOD.ready.rover=null}
   if(m){LOD.lo.remote=remote;put('remote',m);LOD.hi.remote=m;LOD.ready.remote=null}
@@ -451,15 +457,33 @@ function armSwap(){if(LOD.timer)return;LOD.timer=setInterval(()=>{if(LOD.off){cl
 function put(kind,o){
   if(kind==='rover'){const old=rover;if(old===o)return;o.pan=old.pan;o.trd=old.trd;o.trdDrawn=-1;scene.remove(old.root);scene.add(o.root);rover=o}
   else{const old=remote;if(old===o)return;if(old){scene.remove(old.root,old.shadow)}scene.add(o.root,o.shadow);remote=o}
-  dirty=true;wake()}
+  warmed=false;warmUp();dirty=true;wake()}
+/* The controller, the link, the pads and the floor are hidden on the project card and first appear in the middle of the move
+   to the pick screen; a model swapped in appears in whatever frame comes next. Their geometry is sent to the GPU beforehand:
+   one draw of everything, clipped to a single pixel, while the view is off screen (the page says when, api.offscreen), so no
+   frame of a transition has to stop and upload it. */
+let warmed=false;
+function warmUp(){if(warmed||!ren||!rover)return;
+  if(pageBusy()||!(api.offscreen&&api.offscreen())){clearTimeout(warmUp.t);warmUp.t=setTimeout(()=>idle(warmUp),700);return}
+  warmed=true;const tops=[rover.root,remote&&remote.root,remote&&remote.shadow,padR,padM,floorM,link&&link.g].filter(Boolean),vis=tops.map(o=>o.visible),cull=[];
+  tops.forEach(o=>{o.visible=true;o.traverse(m=>{if(m.frustumCulled){cull.push(m);m.frustumCulled=false}})});
+  try{ren.setScissorTest(true);ren.setScissor(0,0,1,1);ren.render(scene,cam)}catch(e){}
+  ren.setScissorTest(false);tops.forEach((o,i)=>o.visible=vis[i]);cull.forEach(m=>m.frustumCulled=true);
+  try{apply(0);ren.render(scene,cam)}catch(e){}   // the canvas holds the real picture again, as if nothing happened, for when it comes back into view
+  dirty=true}
 function watchLod(raw){const w=LOD.watch;if(!w||raw<=0||raw>.25)return;w.n++;w.sum+=raw;
   if(w.n<60)return;LOD.watch=null;const avg=w.sum/w.n;
   if(avg>(tier===0?.042:.034)){LOD.off=true;LOD.level='lo';if(LOD.lo.rover)put('rover',LOD.lo.rover);if(LOD.lo.remote)put('remote',LOD.lo.remote);
     console.info('DataLink: back to the light models ('+Math.round(avg*1000)+' ms a frame)')}}
 
 /* ---------- init ---------- */
+/* the page can say when it is busy (a page transition, api.busy): the heavy steps below wait until it is calm again */
+const pageBusy=()=>!!(api.busy&&api.busy()),calm=()=>new Promise(r=>(function c(){if(pageBusy())setTimeout(c,120);else r()})());
+/* shaders are compiled before the first frame needs them (in the background where the GPU driver allows it), so the first
+   picture never stops to compile them in the middle of a transition */
+function precompile(){try{if(ren.compileAsync&&ren.extensions.has('KHR_parallel_shader_compile'))return ren.compileAsync(scene,cam).catch(()=>{});ren.compile(scene,cam)}catch(e){}return Promise.resolve()}
 function init(t){tier=t|0;if(ready)return ready;
-  ready=Promise.all([import('three'),import('three/addons/environments/RoomEnvironment.js')]).then(async([t3])=>{T=t3;
+  ready=Promise.all([import('three'),import('three/addons/environments/RoomEnvironment.js')]).then(async([t3])=>{T=t3;await calm();
     cv=document.createElement('canvas');cv.className='dl3d';
     try{ren=new T.WebGLRenderer({canvas:cv,antialias:tier===0,alpha:true,powerPreference:'low-power'})}catch(e){console.info('3D: no WebGL',e);return false}
     ren.toneMapping=T.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.setClearColor(0,0);
@@ -470,21 +494,29 @@ function init(t){tier=t|0;if(ready)return ready;
     lights.rimC=new T.DirectionalLight(0x4DC8FF,1.5);lights.rimC.position.set(4,2.2,-4);scene.add(lights.rimC);
     lights.under=new T.DirectionalLight(0xdfe6ff,0);lights.under.position.set(1,-4,3);scene.add(lights.under);   /* lights the undersides when the camera looks from below */
     const pm=new T.PMREMGenerator(ren);scene.environment=pm.fromScene(studio(),.035).texture;pm.dispose();
-    atlas=new T.TextureLoader().load('assets/models/atlas.webp',()=>{dirty=true;wake()});atlas.colorSpace=T.SRGBColorSpace;atlas.anisotropy=tier===0?8:4;
+    /* the atlas (2048 x 2048) is decoded off the main thread before it goes to the GPU, so no frame ever waits for its pixels */
+    atlas=new T.Texture();atlas.colorSpace=T.SRGBColorSpace;atlas.anisotropy=tier===0?8:4;
+    {const im=new Image(),loaded=()=>im.complete&&im.naturalWidth?Promise.resolve():new Promise((r,j)=>{im.onload=r;im.onerror=j});
+      im.crossOrigin='anonymous';im.src='assets/models/atlas.webp';
+      (im.decode?im.decode().catch(loaded):loaded()).then(()=>{atlas.image=im;atlas.needsUpdate=true;try{ren.initTexture(atlas)}catch(e){}dirty=true;wake()},()=>{})}
     padR=buildPad(0xFF9F43);padM=buildPad(0x4DC8FF);scene.add(padR,padM);
     const fc=document.createElement('canvas');fc.width=fc.height=256;const fg=fc.getContext('2d'),gr=fg.createRadialGradient(128,128,0,128,128,128);
     gr.addColorStop(0,'rgba(150,170,210,.10)');gr.addColorStop(.5,'rgba(150,170,210,.04)');gr.addColorStop(1,'rgba(150,170,210,0)');fg.fillStyle=gr;fg.fillRect(0,0,256,256);
     floorM=new T.Mesh(new T.CircleGeometry(13,64),new T.MeshBasicMaterial({map:new T.CanvasTexture(fc),transparent:true,depthWrite:false}));floorM.rotation.x=-PI/2;floorM.renderOrder=-3;scene.add(floorM);
     cv.addEventListener('webglcontextlost',e=>e.preventDefault());
     /* the rover first (the project card needs it), then the controller */
-    try{const RM=await dataScript('assets/models/rover.js','DL_ROVER','dl-rover');rover=buildRover(await unpack(RM),RM);scene.add(rover.root);
+    try{const RM=await dataScript('assets/models/rover.js','DL_ROVER','dl-rover'),ms=await unpack(RM);await calm();rover=buildRover(ms,RM);scene.add(rover.root);
       const b=rover.body;R0=b.r*.98;TGT=[b.c.x,b.c.y,b.c.z]}
     catch(e){console.warn('DataLink: rover model unavailable',e);return false}
     Object.assign(cur,pose());
-    dataScript('assets/models/remote.js','DL_REMOTE','dl-remote').then(unpack).then(ms=>{remote=buildRemote(ms,window.DL_REMOTE);scene.add(remote.root,remote.shadow);placeLink();dirty=true;wake();(api.onRemote||(()=>{}))();
-        maybeHi()})
+    dataScript('assets/models/remote.js','DL_REMOTE','dl-remote').then(unpack).then(async ms=>{await calm();remote=buildRemote(ms,window.DL_REMOTE);scene.add(remote.root,remote.shadow);placeLink();dirty=true;wake();(api.onRemote||(()=>{}))();
+        /* the controller's screen, the link and its glow are first drawn on the pick screen, in the middle of a transition:
+           their shaders and the screen's texture are prepared now instead */
+        if(remote.scrMat&&remote.scrMat.emissiveMap)try{ren.initTexture(remote.scrMat.emissiveMap)}catch(e){}
+        precompile();warmed=false;idle(warmUp);maybeHi()})
       .catch(e=>console.warn('DataLink: controller model unavailable',e));
     if(W>1)placeLink();
+    await calm();await precompile();
     return true}).catch(e=>{console.info('3D unavailable',e);return false});
   return ready}
 
@@ -496,7 +528,7 @@ const api=window.DL3D={init,
   mount(el){if(!cv)return;slot=el;if(cv.parentNode!==el)el.appendChild(cv);
     if(!ro)ro=new ResizeObserver(es=>{for(const e of es)if(e.target===slot&&cv.parentNode===slot){const r=e.contentRect;if(r.width&&r.height)setSize(r.width,r.height)}});
     ro.disconnect();ro.observe(el);const r=el.getBoundingClientRect();if(r.width&&r.height)setSize(r.width,r.height,true)},
-  setSize,setVis(v){shown=!!v;wake()},keep(ms){force=Math.max(force,vt+ms/1000);wake()},lowRes(ms){lowUntil=vt+ms/1000;buffer();wake()},
+  setSize,setVis(v){shown=!!v;wake()},keep(ms){force=Math.max(force,vt+ms/1000);wake()},lowRes(ms,later){lowUntil=vt+ms/1000;if(!later)buffer();wake()},   /* later: a mount() follows, which resizes the canvas once, already at 1x */
   /* go to a mode; with dur>0 the picture eases there from wherever it is now */
   go(m,{dur=900,ease=easeIO,from,goal,clock}={}){cur.rYaw+=spinR*cur.rTurn;spinR=0;mode=m;fixedGoal=goal||null;
     const g=goalNow();cur.rYaw=g.rYaw+wrap(cur.rYaw-g.rYaw);cur.mYaw=g.mYaw+wrap(cur.mYaw-g.mYaw);
