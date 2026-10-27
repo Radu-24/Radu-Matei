@@ -1136,6 +1136,144 @@ button.pj{cursor:pointer}
   -webkit-backdrop-filter:blur(12px) saturate(1.7);backdrop-filter:blur(12px) saturate(1.7);transition:opacity .3s,transform .5s var(--spring);pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}#stage,#island{transition-duration:.01s!important}}
+
+/* ---------- Contact: one screen, a card drawn by light ----------
+   The page never scrolls: the wheel and a sideways drag flip the card instead. After the page transition the island traces
+   its own outline (both halves start at the top and meet underneath), shoots a beam down, and the beam traces the card the
+   same way; then the glass fills in and the lines are engraved one by one.
+   The card is one 3D object (the perspective lives in its own transform). Everything that moves is transform or opacity,
+   apart from the short engraving wipes (clip-path on small text boxes) and the outline strokes (small SVGs). Nothing inside
+   the card uses backdrop blur, and its script only runs while the card is moving. */
+.p-contact{overflow:hidden}
+.p-contact .pw{height:100%;min-height:0}
+.p-contact .pc{min-height:0;height:100%;max-width:none;display:grid;grid-template-rows:auto minmax(0,1fr) auto;justify-items:center;
+  padding:calc(80px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.p-contact h1{font-size:clamp(56px,min(13vw,17vh),190px);text-align:center}
+.p-contact .tt,.p-contact .tb{animation:none!important}.p-contact .tb{display:none}
+.ct-on .edge{opacity:0}
+.ct-stage{align-self:center;display:grid;place-items:center;width:100%;padding:2vh 0}
+.ct-float{animation:ctFloat 7s ease-in-out infinite;animation-play-state:paused}
+.ct-live .ct-float{animation-play-state:running}
+.page:not(.active) .ct-float,.hush .ct-float,.mo .ct-float{animation-play-state:paused}
+@keyframes ctFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.ct-lift{transition:transform .55s var(--spring)}
+.ct-drag .ct-lift{transform:scale(1.03)}
+.ct-card{--w:min(580px,88vw,calc((85svh - 220px)*1.62));--r:28px;position:relative;width:var(--w);height:calc(var(--w)/1.62);
+  transform:perspective(1300px);transform-style:preserve-3d;cursor:grab;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
+.ct-drag .ct-card{cursor:grabbing}
+.ct-card img{-webkit-user-drag:none;user-select:none}
+.ct-rot{position:absolute;inset:0;transform-style:preserve-3d}
+.ct-face.lq{position:absolute;inset:0;border-radius:var(--r);overflow:hidden;-webkit-backface-visibility:hidden;backface-visibility:hidden;container-type:size;
+  --lq-rim:linear-gradient(140deg,color-mix(in srgb,var(--pc) 70%,#fff),color-mix(in srgb,var(--pc) 40%,transparent) 16%,rgba(255,255,255,.08) 34%,rgba(255,255,255,.03) 60%,rgba(255,255,255,.22) 84%,rgba(255,255,255,.55));
+  background:radial-gradient(110% 90% at 0% 0%,color-mix(in srgb,var(--pc) 15%,transparent),transparent 55%),var(--lq-fill),linear-gradient(160deg,rgba(25,29,43,.93),rgba(9,11,18,.95));
+  box-shadow:var(--lq-depth),0 30px 70px rgba(0,0,0,.45)}
+.ct-front{transform:translateZ(.5px)}
+.ct-back{transform:rotateY(180deg) translateZ(.5px);pointer-events:none}
+.ct-pre .ct-face{opacity:0}
+/* the holographic sheen and the glare: big gradients that only move (transform), set from the tilt and the flip */
+.ct-foil,.ct-glare{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:inherit}
+.ct-foil{z-index:0;opacity:0;mix-blend-mode:color-dodge}
+:root:not(.t0) .ct-foil{mix-blend-mode:normal}
+.ct-foil>i,.ct-glare>i{position:absolute;left:-100%;top:-100%;width:300%;height:300%;will-change:transform}
+.ct-foil>i{background:linear-gradient(115deg,transparent 36%,rgba(255,90,106,.55) 42%,rgba(255,225,77,.5) 45.5%,rgba(92,245,154,.5) 49%,rgba(77,200,255,.55) 52.5%,rgba(169,139,255,.55) 56%,transparent 62%),
+  repeating-linear-gradient(115deg,rgba(255,255,255,.06) 0 1px,transparent 1px 6px)}
+.ct-glare{z-index:3}
+.ct-glare>i{background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.13),transparent 18%)}
+.ct-in{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;justify-content:space-between;gap:12px;padding:clamp(18px,4.4%,28px)}
+/* the outline the light draws: both halves start at the top centre and meet at the bottom centre */
+.ct-out{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;transform:translateZ(1px);opacity:0}
+.ct-out path,#ct-trace path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ct-out .g,#ct-trace .g{stroke:color-mix(in srgb,var(--accent) 55%,#fff);stroke-width:7;opacity:.28}
+.ct-out .c,#ct-trace .c{stroke:#fff;stroke-width:1.8}
+#ct-trace{position:fixed;left:0;top:0;z-index:48;pointer-events:none;overflow:visible;display:none}
+#ct-beam{position:fixed;left:0;top:0;z-index:48;width:2px;margin-left:-1px;pointer-events:none;display:none;transform-origin:50% 0;
+  background:linear-gradient(rgba(255,255,255,.4),#fff 55%);border-radius:2px;
+  box-shadow:0 0 8px 1px rgba(255,255,255,.6),0 0 22px 3px color-mix(in srgb,var(--accent) 50%,transparent)}
+.ct-spark{position:fixed;left:0;top:0;z-index:48;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;pointer-events:none;opacity:0;
+  background:radial-gradient(closest-side,#fff,color-mix(in srgb,var(--accent) 60%,transparent) 45%,transparent)}
+/* engraving: each line is wiped in from the left, a bright edge riding the wipe */
+.ct .en{position:relative}
+.ct-pre .en{clip-path:inset(-30% 100% -30% -3%)}
+.en>.lz{position:absolute;top:-12%;bottom:-12%;left:0;width:100%;pointer-events:none;opacity:0;z-index:3;
+  background:linear-gradient(90deg,transparent calc(100% - 30px),color-mix(in srgb,var(--pc) 55%,transparent) calc(100% - 6px),#fff calc(100% - 1.5px),transparent)}
+/* front */
+.ct-top{display:flex;gap:18px;align-items:center}
+.ct-ph{flex:none;width:clamp(64px,15%,88px);aspect-ratio:1;border-radius:22px}
+.ct-ph img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 28%;border-radius:inherit;box-shadow:0 0 0 1px rgba(255,255,255,.18),0 10px 24px rgba(0,0,0,.4)}
+.ct-id{min-width:0}
+.ct-id h2{margin:0;font-size:clamp(26px,5.4cqw,36px);font-weight:700;letter-spacing:-.035em;line-height:1.02}
+.ct-role{margin:5px 0 0;font-size:15px;color:#D4D8E3}
+.ct-ms{margin:3px 0 0;font-size:13px;line-height:1.4;color:var(--muted)}
+.ct-open{margin:0;align-self:flex-start;display:inline-flex;align-items:center;gap:9px;font-size:13.5px;padding:6px 13px;border-radius:999px;line-height:1.3;
+  background:rgba(92,245,154,.09);box-shadow:inset 0 0 0 1px rgba(92,245,154,.28)}
+.ct-open .d{flex:none;width:7px;height:7px;border-radius:50%;background:#5CF59A;box-shadow:0 0 10px #5CF59A}
+.ct-bot{display:flex;flex-direction:column;gap:10px}
+.ct-mail{display:flex;align-items:center;gap:10px;padding:7px 7px 7px 16px;border-radius:18px;background:rgba(255,255,255,.045);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+.ct-addr{flex:1;min-width:0;font-family:var(--mono);font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:copy}
+.ct-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ct .ct-b{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 15px;font-size:14px;line-height:1.2;text-decoration:none;white-space:nowrap}
+.ct .ct-b svg{width:16px;height:16px;flex:none}
+.ct .btn.s{-webkit-backdrop-filter:none;backdrop-filter:none;background:radial-gradient(120% 150% at 28% -10%,rgba(255,255,255,.16),transparent 60%),rgba(255,255,255,.07)}
+.ct .ct-ic{padding:10px 12px;margin-left:auto}
+/* back */
+.ct-bar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ct-seg{position:relative;display:flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+.ct-seg button{position:relative;z-index:1;border:0;background:none;cursor:pointer;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);transition:color .3s}
+.ct-seg button[aria-selected="true"]{color:var(--fg)}
+.ct-segi{position:absolute;left:3px;top:3px;bottom:3px;border-radius:999px;background:rgba(255,255,255,.11);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
+  width:var(--sw,50%);transform:translateX(var(--sx,0));transition:transform .5s var(--spring),width .5s var(--spring)}
+.ct-panes{flex:1;display:grid;min-height:0}
+.ct-pane{grid-area:1/1;min-height:0;display:flex;flex-direction:column;justify-content:space-between;gap:10px;transition:opacity .35s,transform .5s var(--spring),visibility 0s .35s}
+.ct-pane:not(.on){opacity:0;visibility:hidden;transform:translateY(8px);pointer-events:none}
+.ct-pane.on{transition:opacity .35s .08s,transform .5s var(--spring) .08s,visibility 0s}
+.ct-say{margin:6px 0 0;font-size:clamp(20px,4.4cqw,27px);font-weight:600;letter-spacing:-.025em;line-height:1.15}
+.ct-say .m{color:var(--muted)}
+.ct-rollw{display:flex;align-items:center;gap:12px;margin-top:2px}
+.ct-roll{--L:1.18em;position:relative;height:var(--L);min-width:0;font-size:clamp(26px,6cqw,36px);font-weight:700;letter-spacing:-.035em;line-height:var(--L);cursor:ns-resize;outline-offset:6px;border-radius:8px}
+.ct-rw{transition:transform .6s var(--spring);pointer-events:none}
+.ct-rw span{display:block;height:var(--L);white-space:nowrap;opacity:0;transition:opacity .35s;pointer-events:none}
+.ct-rw span.on{opacity:1}
+.ct-roll.rolling .ct-rw span.nb{opacity:.22}
+.ct-ul{position:absolute;left:0;bottom:-3px;height:3px;border-radius:3px;background:currentColor;opacity:.55;transform-origin:0 50%;transition:transform .55s var(--spring)}
+.ct-arr{flex:none;display:flex;flex-direction:column;gap:4px}
+.ct-arr button{width:36px;height:27px;border:0;border-radius:9px;cursor:pointer;color:var(--muted);background:rgba(255,255,255,.06);display:grid;place-items:center;transition:background .2s,color .2s}
+.ct-arr button:hover{background:rgba(255,255,255,.13);color:var(--fg)}
+.ct-arr button:active{transform:scale(.92);transition-duration:.08s}
+.ct-arr svg{width:17px;height:17px}
+.ct-subj{margin:0;font-family:var(--mono);font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ct-subj b{font-weight:500;color:var(--fg)}
+.ct-mails{display:flex;gap:8px;flex-wrap:wrap}
+.touch .ct-dsk{display:none!important}
+:root:not(.touch) .ct-mob{display:none!important}
+.ct-save{flex-direction:row;align-items:center;justify-content:flex-start;gap:clamp(16px,4cqw,26px)}
+.ct-qr{flex:none;width:clamp(120px,30cqw,164px);aspect-ratio:1;padding:10px;border-radius:16px;background:#EEF0F8;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.ct-qr svg{display:block;width:100%;height:100%}
+.ct-sv h3{margin:0;font-size:22px;letter-spacing:-.02em}
+.ct-sv p{margin:6px 0 14px;font-size:14px;color:#C9CEDA;line-height:1.45}
+.ct-sv .ct-note{margin:12px 0 0;font-size:12px;color:var(--muted)}
+.touch .ct-qr{display:none}
+.ct-s{display:none}
+.ct-hint{margin:0;font-size:13px;color:var(--muted);text-align:center}
+/* phones: the card stands up */
+@media (max-width:640px){
+  .ct-card{--w:min(380px,calc(100vw - 32px));--r:26px;height:min(480px,calc(100svh - 240px))}
+  .ct-in{padding:20px}
+  .ct-ph{width:66px;border-radius:19px}
+  .ct-top{gap:14px}
+  .ct-id h2{font-size:28px}
+  .ct-role{font-size:14px}
+  .ct-ms{margin-top:2px}
+  .ct-say{font-size:23px}.ct-roll{font-size:26px}
+  .ct-acts .ct-b[data-ct="write"]{flex:1 1 100%}
+  .ct-mail .ct-l{display:none}.ct-mail .ct-s{display:inline}
+  .ct .ct-ic{margin-left:0}
+  .ct-save{flex-direction:column;justify-content:center;text-align:center}
+  .ct-sv .btn{width:100%}
+  .ct-mails .ct-b{flex:1 1 100%}
+}
+@media (max-width:640px) and (max-height:700px){.ct-ms{display:none}.ct-in{gap:8px;padding:18px}}
+@media (prefers-reduced-motion:reduce){.ct-float{animation:none}.ct-rw,.ct-ul,.ct-segi,.ct-pane{transition:none}}
 </style>
 </head>
 <body>
@@ -1227,7 +1365,7 @@ button.pj{cursor:pointer}
         <div class="ft-id"><p class="ft-name">Radu <span>Matei</span></p><p class="ft-tag">Telecom engineer · Brașov, România</p></div>
         <nav class="ft-col" aria-label="Pages"><h2>Pages</h2><button data-go="projects">Projects</button><button data-go="record">Record</button><button data-go="about">About</button><button data-go="contact">Contact</button><button data-go="privacy">Privacy</button></nav>
         <nav class="ft-col" aria-label="Projects"><h2>Projects</h2><button data-go="projects">DataLink Rover</button><button data-go="projects">Password Helper</button><a href="https://github.com/Radu-24/Password-Helper" target="_blank" rel="noopener">Password Helper on GitHub <i aria-hidden="true">↗</i></a></nav>
-        <nav class="ft-col" aria-label="Contact"><h2>Contact</h2><a href="mailto:ramatei@gmail.com">ramatei@gmail.com</a><a href="https://github.com/Radu-24" target="_blank" rel="noopener">GitHub <i aria-hidden="true">↗</i></a></nav>
+        <nav class="ft-col" aria-label="Contact"><h2>Contact</h2><a href="mailto:ramatei@gmail.com">ramatei@gmail.com</a><a href="https://www.linkedin.com/in/radu-matei-1251172b3/" target="_blank" rel="noopener">LinkedIn <i aria-hidden="true">↗</i></a><a href="https://github.com/Radu-24" target="_blank" rel="noopener">GitHub <i aria-hidden="true">↗</i></a></nav>
       </div>
       <div class="ft-bot"><p>© 2026 Radu Matei · Brașov, România</p><p class="ft-links"><button data-go="privacy">Privacy notice</button><span>No cookies · no tracking</span></p></div>
       <p class="cr">Type: Instrument Sans and IBM Plex Mono (SIL OFL). 3D: three.js (MIT).</p>
@@ -1580,10 +1718,78 @@ last = t</pre></div>
     <h1 class="ttl r"><span class="tt">About</span><span class="tb" aria-hidden="true">About</span></h1><p class="lead r">Off the clock: competitive tennis, F1 and games.</p>
     <div class="cards r"><article class="card lq"><h3>Tennis</h3><p>Competitive player. The serve animation lands here.</p></article><article class="card lq"><h3>F1</h3><p>Race-engineer brain, sofa on Sundays.</p></article><article class="card lq"><h3>Games</h3><p>[Your current rotation]</p></article></div>
   </div></div></section>
-  <section class="page p-contact" id="pg-contact" aria-label="Contact"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="rings" aria-hidden="true"></div><div class="wash"></div><div class="pc">
-    <h1 class="ttl r"><span class="tt">Contact</span><span class="tb" aria-hidden="true">Contact</span></h1><p class="lead r">Open a channel. I read everything.</p>
-    <div class="cards r"><article class="card lq"><h3>Email</h3><p>[your email]</p></article><article class="card lq"><h3>LinkedIn</h3><p>[linkedin.com/in/…]</p></article><article class="card lq"><h3>GitHub</h3><p>[github.com/…]</p></article></div>
-    <div class="row r"><button class="btn s" data-go="home">Back home</button></div>
+  <section class="page p-contact" id="pg-contact" aria-label="Contact"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="rings" aria-hidden="true"></div><div class="wash"></div><div class="pc ct">
+    <h1 class="ttl r"><span class="tt">Contact</span><span class="tb" aria-hidden="true">Contact</span></h1>
+    <div class="ct-stage"><div class="ct-float"><div class="ct-lift"><div class="ct-card" id="ct-card">
+      <div class="ct-rot">
+        <article class="ct-face ct-front lq" aria-label="Contact card">
+          <i class="ct-foil" aria-hidden="true"><i></i></i><i class="ct-glare" aria-hidden="true"><i></i></i>
+          <div class="ct-in">
+            <div>
+              <div class="ct-top">
+                <span class="ct-ph en"><img src="assets/img/me.webp" alt="Radu Matei" width="600" height="800" draggable="false" decoding="async"><i class="lz"></i></span>
+                <div class="ct-id">
+                  <h2 class="en">Radu Matei<i class="lz"></i></h2>
+                  <p class="ct-role en">Telecom engineer · Master's student at UniTBV<i class="lz"></i></p>
+                  <p class="ct-ms en">Integrated Electronic and Communication Systems<i class="lz"></i></p>
+                </div>
+              </div>
+            </div>
+            <p class="ct-open en"><i class="d" aria-hidden="true"></i>Looking for an internship in cyber security<i class="lz"></i></p>
+            <div class="ct-bot">
+              <div class="ct-mail en"><span class="ct-addr" data-ct="copy">ramatei@gmail.com</span><button class="btn s ct-b" data-ct="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6a2 2 0 012-2h9"/></svg><span class="ct-l">Copy address</span><span class="ct-s">Copy</span></button><i class="lz"></i></div>
+              <div class="ct-acts en">
+                <button class="btn p ct-b" data-ct="write"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z"/></svg>Write to me</button>
+                <a class="btn s ct-b" href="https://www.linkedin.com/in/radu-matei-1251172b3/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="4.5" fill="currentColor"/><path d="M8 10.5v6.5M8 7.3v.01M11.8 17v-3.6a2.3 2.3 0 014.6 0V17M11.8 10.5V17" fill="none" stroke="#10131c" stroke-width="2.1" stroke-linecap="round"/></svg>LinkedIn</a>
+                <a class="btn s ct-b" href="https://github.com/Radu-24" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 00-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 015 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0012 2z"/></svg>GitHub</a>
+                <button class="btn s ct-b ct-ic" data-ct="save" aria-label="Save my contact" title="Save my contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 20h2"/></svg></button>
+                <i class="lz"></i>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="ct-face ct-back lq" aria-label="Write to me or save my contact" inert>
+          <i class="ct-foil" aria-hidden="true"><i></i></i><i class="ct-glare" aria-hidden="true"><i></i></i>
+          <div class="ct-in">
+            <div class="ct-bar">
+              <button class="btn s ct-b" data-ct="front" aria-label="Back to the card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span class="ct-dsk">Card</span></button>
+              <div class="ct-seg" role="tablist" aria-label="Back of the card"><i class="ct-segi" aria-hidden="true"></i><button role="tab" data-pane="write" aria-selected="true">Write to me</button><button role="tab" data-pane="save" aria-selected="false">Save contact</button></div>
+            </div>
+            <div class="ct-panes">
+              <div class="ct-pane ct-write on" data-pane-id="write">
+                <div>
+                  <p class="ct-say"><span class="m">Hi Radu,</span><br>I'm writing about</p>
+                  <div class="ct-rollw">
+                    <span class="ct-arr"><button data-roll="-1" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button><button data-roll="1" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></span>
+                    <div class="ct-roll" tabindex="0" role="spinbutton" aria-label="What you're writing about"><div class="ct-rw"></div><i class="ct-ul" aria-hidden="true"></i></div>
+                  </div>
+                </div>
+                <p class="ct-subj">Subject <b></b></p>
+                <div class="ct-mails">
+                  <button class="btn s ct-b ct-dsk" data-mail="gmail">Gmail</button>
+                  <button class="btn s ct-b ct-dsk" data-mail="outlook">Outlook</button>
+                  <button class="btn s ct-b ct-dsk" data-mail="yahoo">Yahoo</button>
+                  <button class="btn s ct-b ct-dsk" data-mail="app">Mail app</button>
+                  <button class="btn p ct-b ct-mob" data-mail="app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z"/></svg>Open my email app</button>
+                  <button class="btn s ct-b ct-mob" data-ct="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6a2 2 0 012-2h9"/></svg>Copy my address</button>
+                </div>
+              </div>
+              <div class="ct-pane ct-save" data-pane-id="save">
+                <div class="ct-qr" role="img" aria-label="QR code with my contact details"><svg viewBox="0 0 53 53" aria-hidden="true"><path d="M0 0.5h7m1 0h1m1 0h1m1 0h1m2 0h3m2 0h3m3 0h2m2 0h1m1 0h1m1 0h1m2 0h2m2 0h2m3 0h7M0 1.5h1m5 0h1m2 0h1m3 0h1m1 0h6m1 0h1m1 0h1m2 0h1m3 0h2m2 0h5m1 0h3m2 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h1m1 0h5m1 0h1m5 0h1m2 0h2m2 0h4m1 0h3m1 0h1m2 0h1m1 0h1m2 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m2 0h1m3 0h4m2 0h1m4 0h1m2 0h2m1 0h1m2 0h1m4 0h2m2 0h1m1 0h1m1 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m2 0h1m4 0h3m6 0h6m1 0h3m1 0h1m1 0h1m1 0h1m3 0h1m3 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h1m2 0h2m1 0h1m1 0h1m2 0h3m2 0h1m3 0h1m1 0h1m3 0h3m2 0h4m3 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M9 7.5h1m1 0h2m2 0h2m2 0h2m3 0h1m3 0h1m1 0h2m4 0h2M0 8.5h1m1 0h1m3 0h2m1 0h4m1 0h1m2 0h1m4 0h1m1 0h5m1 0h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m4 0h1m2 0h1m1 0h1M0 9.5h1m1 0h1m1 0h2m2 0h1m1 0h2m2 0h2m3 0h1m2 0h5m1 0h2m2 0h2m6 0h2m1 0h1m4 0h2M2 10.5h2m1 0h2m2 0h3m1 0h1m5 0h1m3 0h1m2 0h1m1 0h2m1 0h1m5 0h1m1 0h2m1 0h3m4 0h2m1 0h1M1 11.5h1m1 0h2m2 0h2m6 0h1m2 0h1m3 0h1m2 0h1m1 0h1m1 0h1m2 0h1m1 0h10m2 0h1m1 0h2m2 0h1M3 12.5h2m1 0h1m1 0h1m2 0h4m4 0h2m1 0h1m1 0h2m3 0h1m2 0h1m1 0h1m1 0h3m1 0h2m1 0h1m4 0h1m2 0h2M0 13.5h3m2 0h1m1 0h5m2 0h3m1 0h1m2 0h2m1 0h1m2 0h3m3 0h1m9 0h1m5 0h1m2 0h1M2 14.5h2m1 0h3m1 0h2m1 0h1m1 0h3m1 0h1m1 0h1m4 0h1m2 0h3m1 0h2m2 0h1m3 0h1m4 0h2m1 0h1m2 0h2M2 15.5h1m1 0h2m1 0h3m1 0h1m1 0h4m1 0h1m2 0h3m1 0h1m2 0h5m1 0h1m1 0h2m1 0h1m1 0h9m1 0h1M0 16.5h3m2 0h3m2 0h4m1 0h2m1 0h1m1 0h1m1 0h1m1 0h2m1 0h1m2 0h1m1 0h2m2 0h1m3 0h1m1 0h8m2 0h1M0 17.5h1m1 0h2m3 0h1m3 0h1m1 0h1m2 0h1m3 0h3m8 0h3m3 0h1m2 0h1m2 0h1m6 0h1M2 18.5h1m3 0h1m1 0h1m1 0h1m3 0h2m2 0h2m1 0h3m2 0h1m1 0h3m2 0h2m1 0h1m2 0h1m1 0h3m1 0h1m3 0h1m1 0h2M0 19.5h1m2 0h2m3 0h2m1 0h2m1 0h2m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m2 0h1m4 0h2m4 0h2m2 0h1m2 0h1m1 0h2m1 0h1M1 20.5h2m1 0h9m1 0h2m2 0h2m1 0h2m1 0h1m2 0h1m2 0h1m1 0h2m2 0h2m1 0h7m2 0h1m1 0h1M9 21.5h1m2 0h4m1 0h1m1 0h1m1 0h1m1 0h1m1 0h2m2 0h1m1 0h1m3 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h2m1 0h1M0 22.5h2m1 0h1m2 0h1m1 0h4m2 0h1m2 0h1m1 0h3m1 0h2m1 0h1m1 0h3m1 0h1m2 0h1m1 0h1m1 0h2m4 0h1m1 0h1m2 0h1m1 0h1M4 23.5h1m2 0h2m2 0h1m4 0h1m1 0h2m1 0h2m5 0h1m2 0h2m1 0h1m2 0h1m2 0h1m4 0h1m1 0h3M0 24.5h1m1 0h1m1 0h6m4 0h3m1 0h1m3 0h7m1 0h3m1 0h3m1 0h4m2 0h6m1 0h2M0 25.5h1m3 0h1m3 0h1m3 0h1m2 0h2m4 0h1m2 0h1m3 0h2m2 0h1m2 0h3m1 0h2m2 0h2m3 0h2m2 0h1M0 26.5h1m1 0h1m1 0h1m1 0h1m1 0h5m1 0h1m1 0h3m1 0h1m1 0h3m1 0h1m1 0h2m3 0h2m3 0h1m4 0h2m1 0h1m1 0h1m1 0h1m1 0h1M0 27.5h2m2 0h1m3 0h3m2 0h4m1 0h4m2 0h1m3 0h5m3 0h1m2 0h1m4 0h1m3 0h2m1 0h1M2 28.5h1m1 0h5m1 0h1m1 0h1m7 0h1m1 0h8m1 0h2m3 0h3m1 0h2m2 0h9M0 29.5h4m1 0h1m1 0h1m3 0h2m2 0h2m1 0h1m3 0h3m1 0h1m9 0h2m1 0h1m1 0h1m2 0h2m3 0h1M0 30.5h5m1 0h6m1 0h2m2 0h2m1 0h4m3 0h1m1 0h1m2 0h1m4 0h2m1 0h3m3 0h1m3 0h1m1 0h1M0 31.5h2m1 0h2m5 0h1m1 0h2m2 0h1m1 0h3m1 0h1m2 0h1m1 0h1m4 0h5m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1m2 0h2M1 32.5h2m3 0h2m2 0h2m3 0h3m1 0h2m1 0h1m1 0h3m5 0h2m2 0h2m2 0h2m1 0h3m1 0h2M0 33.5h1m2 0h2m4 0h2m1 0h2m1 0h6m1 0h3m4 0h1m1 0h1m1 0h1m3 0h1m1 0h1m1 0h1m2 0h1m1 0h2m1 0h4M0 34.5h1m2 0h2m1 0h1m2 0h4m1 0h2m1 0h1m1 0h5m1 0h3m1 0h2m1 0h2m2 0h2m1 0h2m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1M0 35.5h2m1 0h3m1 0h3m1 0h2m2 0h1m4 0h1m1 0h1m1 0h2m1 0h1m2 0h1m1 0h2m1 0h3m3 0h5m2 0h2M2 36.5h1m3 0h2m2 0h3m4 0h1m2 0h1m1 0h3m1 0h1m1 0h2m1 0h2m1 0h1m1 0h1m2 0h2m1 0h2m5 0h1m2 0h1M0 37.5h5m5 0h5m1 0h1m3 0h1m1 0h6m1 0h1m1 0h3m1 0h1m1 0h1m1 0h1m3 0h1m1 0h1m1 0h1m1 0h1M1 38.5h3m1 0h2m3 0h3m4 0h1m1 0h1m3 0h1m1 0h2m2 0h2m2 0h4m4 0h6m1 0h1m1 0h3M0 39.5h2m2 0h1m4 0h2m6 0h2m1 0h1m1 0h1m1 0h2m4 0h1m3 0h1m4 0h2m3 0h1m4 0h1m1 0h2M1 40.5h1m4 0h2m6 0h1m1 0h1m1 0h1m1 0h1m3 0h1m1 0h3m1 0h1m1 0h2m2 0h2m1 0h2m2 0h2m2 0h2m1 0h1M0 41.5h1m1 0h4m4 0h2m3 0h4m1 0h1m2 0h2m1 0h4m2 0h1m2 0h2m2 0h1m3 0h1m2 0h2m1 0h2M0 42.5h2m1 0h5m1 0h3m3 0h1m4 0h5m1 0h1m2 0h3m3 0h2m2 0h2m3 0h1m1 0h2m2 0h1m1 0h1M1 43.5h2m6 0h2m1 0h1m2 0h2m1 0h1m1 0h2m2 0h1m4 0h1m2 0h3m1 0h1m3 0h2m2 0h1m1 0h1m2 0h1m1 0h1M3 44.5h1m2 0h2m2 0h3m1 0h5m3 0h11m1 0h4m1 0h2m1 0h8m1 0h1M8 45.5h2m1 0h1m1 0h1m1 0h3m1 0h1m2 0h1m1 0h1m3 0h2m1 0h2m2 0h3m2 0h1m3 0h1m3 0h2m2 0h1M0 46.5h7m1 0h1m2 0h4m4 0h6m1 0h1m1 0h1m2 0h6m1 0h2m4 0h1m1 0h1m1 0h1m3 0h1M0 47.5h1m5 0h1m3 0h3m2 0h3m2 0h2m2 0h1m3 0h3m3 0h1m1 0h4m1 0h1m1 0h2m3 0h2m2 0h1M0 48.5h1m1 0h3m1 0h1m8 0h1m1 0h1m2 0h10m2 0h2m1 0h2m1 0h1m1 0h13M0 49.5h1m1 0h3m1 0h1m3 0h1m2 0h6m2 0h1m2 0h2m2 0h2m2 0h1m2 0h3m2 0h1m3 0h1m1 0h1m1 0h1m1 0h1m1 0h1M0 50.5h1m1 0h3m1 0h1m1 0h1m4 0h2m2 0h3m1 0h3m1 0h1m3 0h1m3 0h1m2 0h2m1 0h1m1 0h6m1 0h1m2 0h1M0 51.5h1m5 0h1m3 0h1m1 0h1m1 0h2m1 0h4m3 0h4m4 0h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h1m1 0h1M0 52.5h7m1 0h2m2 0h2m1 0h2m1 0h4m2 0h1m3 0h1m1 0h1m1 0h1m3 0h3m1 0h2m1 0h1m3 0h2m3 0h1" fill="none" stroke="#07080D" stroke-width="1.04"/></svg></div>
+                <div class="ct-sv">
+                  <h3>Save my contact</h3>
+                  <p><span class="ms">Scan it with your phone's camera, or save the file.</span><span class="tp">Adds me to your phone's contacts.</span></p>
+                  <button class="btn p ct-b" data-ct="vcf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Save contact</button>
+                  <p class="ct-note">My name, email, this site and LinkedIn.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+      <svg class="ct-out" aria-hidden="true"><path class="g"/><path class="g"/><path class="c"/><path class="c"/></svg>
+    </div></div></div></div>
+    <p class="ct-hint r"><span class="ms">Scroll, or drag the card, to flip it</span><span class="tp">Drag the card sideways to flip it</span></p>
   </div></div></section>
   <section class="page p-privacy" id="pg-privacy" aria-label="Privacy notice"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="pools" aria-hidden="true"></div><div class="wash"></div><div class="pc">
     <h1 class="ttl r"><span class="tt">Privacy</span><span class="tb" aria-hidden="true">Privacy</span></h1><p class="lead r">What happens to your data on this site. Short version: no cookies, no tracking, nothing stored on your device.</p>
@@ -1598,6 +1804,8 @@ last = t</pre></div>
         <p>Only if you press “Check this password” on the Password Helper page, your browser sends the first 5 characters of the password’s SHA-1 hash to Have I Been Pwned (api.pwnedpasswords.com, run by Troy Hunt and served through Cloudflare). The password itself and its full hash never leave your browser; the request carries no cookies and no referrer. Like any website you visit, Have I Been Pwned and Cloudflare receive your IP address and normal browser headers and may keep them in operational logs. Legal basis: my legitimate interest in providing the check you asked for (GDPR Art. 6(1)(f)); it runs only on your request and sends the least data the check needs (a 5-character prefix shared by hundreds of other passwords), so it does not override your interests. Have I Been Pwned is run from Australia, which has no EU adequacy decision, and served through Cloudflare (USA), which covers transfers under the EU-US Data Privacy Framework and Standard Contractual Clauses. Because this transfer happens only when you choose to press the button after reading this, it rests on your explicit consent (GDPR Art. 49(1)(a)); the risk is that your IP address is handled outside the EU without the same legal protection. They keep their logs for the periods described in their policies: see the <a href="https://haveibeenpwned.com/Privacy" target="_blank" rel="noopener">Have I Been Pwned privacy policy</a> and the <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare privacy policy</a>. If you do not press the button, nothing is sent.</p>
         <h2>External links</h2>
         <p>Links to GitHub and other sites open those sites, which have their own privacy policies. Nothing is sent to them until you click.</p>
+        <h2>Writing to me</h2>
+        <p>On the Contact page, “Write to me” opens your own email (Gmail, Outlook or Yahoo in a new window, or the email app on your device) with my address, a subject and a first line filled in. Nothing is sent until you send it there yourself, and this site never sees what you write. “Copy address” puts my address on your clipboard only when you press it, and “Save contact” makes the contact file in your browser; neither sends anything.</p>
         <h2>Your rights</h2>
         <p>Under the GDPR you can ask for access to, correction or deletion of your data, restriction of processing and data portability, and you can object to processing based on legitimate interest. This site itself keeps no personal data, so requests about hosting or leak-check logs may also need to go to GitHub or Have I Been Pwned, but you can always write to me and I will help. You can also complain to the Romanian data protection authority, ANSPDCP (<a href="https://www.dataprotection.ro" target="_blank" rel="noopener">dataprotection.ro</a>), or to the authority in your own EU country.</p>
         <h2>Changes</h2>
@@ -2156,7 +2364,7 @@ function finish(o,n,P){
   o.classList.remove('active');[o,n,n.querySelector('.pw'),n.querySelector('.wash'),dimEl].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());
     Object.assign(el.style,{clipPath:'',transform:'',transformOrigin:'',opacity:'',zIndex:'',background:'',willChange:''})});
   n.querySelectorAll('.r').forEach(r=>r.style.willChange='');
-  n.classList.remove('warm');n.classList.add('active');n.classList.remove('pre');current=P.id;TH.page(P.id);PROJ.left(o,n);DROP.pause(false);
+  n.classList.remove('warm');n.classList.add('active');n.classList.remove('pre');current=P.id;TH.page(P.id);PROJ.left(o,n);CT.left(o,n);DROP.pause(false);
   ORBS.forEach(x=>{x.shown=false;x.b.getAnimations().forEach(a=>a.cancel());x.b.style.opacity='0';x.b.classList.remove('vis')});
   [LIGHT.el,orbsBox].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.style.transform='';el.style.opacity=''});
   LIGHT.diveEnd();root.classList.remove('hush');
@@ -2182,7 +2390,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(!
   if(HOME.sheetOpen()){HOME.closeSheet(true);at?jump(b.dataset.go,at):jump(b.dataset.go)}else jump(b.dataset.go,at)});
 
 const W=()=>innerWidth,H=()=>innerHeight;
-function bringIn(n){PROJ.prep(n);n.style.zIndex=3;n.classList.add('active')}
+function bringIn(n){PROJ.prep(n);CT.prep(n);n.style.zIndex=3;n.classList.add('active')}
 function fade(o,n){LIGHT.off();releaseMenu();collapseIsland();bringIn(n);revealContent(n);return n.animate([{opacity:0},{opacity:1}],{duration:200}).finished.catch(()=>{})}
 const washBg=(P,Z)=>`radial-gradient(circle at ${Z[0]}px ${Z[1]}px,color-mix(in srgb,${P.col} 60%,#fff),color-mix(in srgb,${P.col} 45%,transparent) 45%,transparent 85%)`;
 
@@ -2194,7 +2402,7 @@ const washBg=(P,Z)=>`radial-gradient(circle at ${Z[0]}px ${Z[1]}px,color-mix(in 
 const hold=(el,a,b)=>el.animate([{transform:a},{transform:a,offset:.99999},{transform:b}],{duration:1e7,id:'hold'});
 const unhold=el=>el.getAnimations().forEach(a=>{if(a.id==='hold')a.cancel()});
 function warm(o,n,P,Z=GEO.P){const org=`${Z[0]}px ${Z[1]}px`,pw=n.querySelector('.pw'),wash=n.querySelector('.wash');
-  PROJ.prep(n);n.classList.add('warm');Object.assign(n.style,{zIndex:3,opacity:'0',willChange:'opacity'});
+  PROJ.prep(n);CT.prep(n);n.classList.add('warm');Object.assign(n.style,{zIndex:3,opacity:'0',willChange:'opacity'});
   pw.style.transformOrigin=org;pw.style.willChange='transform';if(!window.NOHOLD)hold(pw,'scale(1.4)','scale(1)');else pw.style.transform='scale(1.4)';
   wash.style.background=washBg(P,Z);Object.assign(wash.style,{opacity:'.9',willChange:'opacity'});
   n.querySelectorAll('.r').forEach(r=>r.style.willChange='transform,opacity');
@@ -2931,6 +3139,246 @@ const PASS=(()=>{const page=$('#pg-pass'),pp=$('#pg-projects'),go=$('#pj-pass'),
     if(e.target.matches&&e.target.matches('input')&&e.target.value)return;   // Escape in a field with text in it belongs to the field
     e.preventDefault();back()});
   return{enter,leave,back,reset}})();
+
+/* ---------- contact: the card ----------
+   After the page transition: the island traces its outline (both halves from the top, meeting underneath), a beam shoots
+   down from where they meet, and it traces the card the same way; the glass fills in and the lines are engraved.
+   The card flips with the wheel or a sideways drag (a spring settles it on a face); the mouse tilts it a little. The loop
+   runs only while something moves. The back holds "write to me" (a reason roller, then the visitor's own email service
+   with my address, a subject and a first line filled in) and "save contact" (a QR code drawn once at build time, and a
+   .vcf file made in the browser). Nothing is stored and nothing is sent anywhere until the visitor clicks out. */
+const CT=(()=>{const page=$('#pg-contact'),card=$('#ct-card'),rot=card.querySelector('.ct-rot'),lift=card.parentElement,
+    front=card.querySelector('.ct-front'),back=card.querySelector('.ct-back'),out=card.querySelector('.ct-out'),outP=[...out.querySelectorAll('path')],
+    foils=[...card.querySelectorAll('.ct-foil')],foilI=foils.map(f=>f.firstElementChild),glare=[...card.querySelectorAll('.ct-glare>i')],
+    ENS=[...card.querySelectorAll('.ct-front .en')];
+  const EMAIL='ramatei@gmail.com',RIGHT=180;
+  const VCF='BEGIN:VCARD\r\nVERSION:3.0\r\nN:Matei;Radu;;;\r\nFN:Radu Matei\r\nTITLE:Telecommunications engineer\r\nEMAIL;TYPE=INTERNET:'+EMAIL+
+    '\r\nURL:https://radumatei.ro\r\nURL:https://www.linkedin.com/in/radu-matei-1251172b3/\r\nEND:VCARD\r\n';
+  /* the pieces that live outside the page, over everything: the island's outline, the beam, the sparks */
+  const NS='http://www.w3.org/2000/svg',trace=document.createElementNS(NS,'svg');trace.id='ct-trace';trace.setAttribute('aria-hidden','true');
+  trace.innerHTML='<path class="g"/><path class="g"/><path class="c"/><path class="c"/>';const trP=[...trace.querySelectorAll('path')];
+  const beam=document.createElement('div');beam.id='ct-beam';const spark=()=>{const s=document.createElement('i');s.className='ct-spark';return s};
+  const sp1=spark(),sp2=spark();document.body.append(trace,beam,sp1,sp2);
+
+  /* a pill or rounded rectangle as two halves, both starting at the top centre and ending at the bottom centre */
+  function halves(w,h,r,o=0){const x0=o,y0=o,x1=w-o,y1=h-o,cx=w/2;r=Math.min(r,(y1-y0)/2);const f=v=>+v.toFixed(2);
+    return[`M${f(cx)} ${f(y0)}H${f(x0+r)}A${f(r)} ${f(r)} 0 0 0 ${f(x0)} ${f(y0+r)}V${f(y1-r)}A${f(r)} ${f(r)} 0 0 0 ${f(x0+r)} ${f(y1)}H${f(cx)}`,
+           `M${f(cx)} ${f(y0)}H${f(x1-r)}A${f(r)} ${f(r)} 0 0 1 ${f(x1)} ${f(y0+r)}V${f(y1-r)}A${f(r)} ${f(r)} 0 0 1 ${f(x1-r)} ${f(y1)}H${f(cx)}`]}
+  function setHalves(P,d){P.forEach((p,i)=>{p.setAttribute('d',d[i%2]);p.setAttribute('pathLength','1');p.style.strokeDasharray='1 1';p.style.strokeDashoffset='1'})}
+  const draw=(P,ms,delay=0)=>Promise.all(P.map(p=>p.animate([{strokeDashoffset:1},{strokeDashoffset:0}],{duration:ms,delay,easing:'cubic-bezier(.55,0,.3,1)',fill:'forwards'}).finished)).catch(()=>{});
+  function pop(s,x,y,size=1){s.style.transform=`translate(${x}px,${y}px)`;
+    return s.animate([{opacity:0,scale:'.2'},{opacity:1,scale:String(1.25*size),offset:.3},{opacity:0,scale:String(.6*size)}],{duration:520,easing:'cubic-bezier(.2,.7,.3,1)'}).finished.catch(()=>{})}
+
+  /* ---------- state ---------- */
+  let live=false,tok=0,raf=0,last=0,shownBack=false,pane='write',sending=false;
+  let fx=0,fv=0,ft=0;                       // flip angle, its speed (deg/s) and the face it is heading for
+  let tx=0,ty=0,ttx=0,tty=0;                // tilt (deg) and where the pointer wants it
+  let drag=null,wheeling=false,wBase=0,wT=0;
+  const t0=()=>TIER.t===0;
+  function apply(){
+    card.style.transform=`perspective(1300px) rotateX(${tx.toFixed(2)}deg) rotateY(${ty.toFixed(2)}deg)`;
+    rot.style.transform=`rotateY(${fx.toFixed(2)}deg)`;
+    const a=((fx%360)+360)%360,edge=Math.abs(Math.sin(a*RAD)),side=Math.cos(a*RAD)<0;
+    /* the sheen slides across as the card turns or tilts, and is strongest edge-on */
+    const sx=-ty*1.6+(side?-1:1)*Math.sin(a*RAD)*14,sy=tx*1.6,o=Math.min(1,(Math.abs(tx)+Math.abs(ty))/14*.55+edge*.8)*(t0()?1:.45);
+    foilI.forEach(f=>f.style.transform=`translate(${sx.toFixed(2)}%,${sy.toFixed(2)}%)`);foils.forEach(f=>f.style.opacity=o.toFixed(3));
+    glare.forEach(g=>g.style.transform=`translate(${(ty*2.2).toFixed(2)}%,${(-tx*2.8).toFixed(2)}%)`);
+    if(side!==shownBack){shownBack=side;front.inert=side;back.inert=!side;front.style.pointerEvents=side?'none':'';back.style.pointerEvents=side?'auto':'none'}}
+  function kick(){if(!raf&&live){last=performance.now();raf=requestAnimationFrame(step)}}
+  function step(t){raf=0;if(!live)return;const dt=Math.min(.05,(t-last)/1000);last=t;
+    if(!drag&&!wheeling){const K=reduce?900:150,C=reduce?60:17.5,n=3,h=dt/n;   // a spring with a little overshoot
+      for(let i=0;i<n;i++){fv+=(K*(ft-fx)-C*fv)*h;fx+=fv*h}}
+    const k=1-Math.exp(-dt*8);tx+=(ttx-tx)*k;ty+=(tty-ty)*k;apply();
+    const still=!drag&&!wheeling&&Math.abs(ft-fx)<.04&&Math.abs(fv)<.6&&Math.abs(ttx-tx)<.02&&Math.abs(tty-ty)<.02;
+    if(still){fx=ft;fv=0;tx=ttx;ty=tty;apply();return}
+    raf=requestAnimationFrame(step)}
+  /* turn to a face: 0 front, 1 back; it always goes the short way, onward in the direction it last turned */
+  function faceTo(f,dir=1){const cur=Math.round(ft/180),isBack=((cur%2)+2)%2===1;if((f===1)!==isBack)ft=(cur+dir)*180;kick()}
+
+  /* ---------- flipping: the wheel scrubs, a sideways drag follows the finger, and both settle with the spring ---------- */
+  page.addEventListener('wheel',e=>{if(!live||menuOpen||busy)return;
+    const roll=e.target.closest('.ct-roll,.ct-arr');let d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;d*=e.deltaMode===1?33:e.deltaMode===2?400:1;
+    if(roll&&shownBack&&pane==='write'){ROLL.wheel(d);return}
+    if(!wheeling){wheeling=true;wBase=ft}
+    fx=clamp(fx+clamp(d*.34,-40,40),wBase-RIGHT-20,wBase+RIGHT+20);fv=0;kick();
+    clearTimeout(wT);wT=setTimeout(()=>{wheeling=false;const m=fx-wBase;ft=Math.abs(m)>26?wBase+RIGHT*Math.sign(m):wBase;kick()},140)},{passive:true});
+  card.addEventListener('pointerdown',e=>{if(!live||e.button>0||drag)return;
+    const onRoll=!!e.target.closest('.ct-rollw')&&shownBack;
+    if(e.target.closest('button,a,input'))return;
+    e.preventDefault();             // no text selection, no image drag, no focus ring
+    drag={id:e.pointerId,x:e.clientX,y:e.clientY,f0:fx,base:ft,axis:null,onRoll,ry:e.clientY,hist:[[e.timeStamp,fx]],tgt:e.target};
+    try{card.setPointerCapture(e.pointerId)}catch(_){}});
+  card.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+    if(!drag.axis){if(Math.hypot(dx,dy)<6)return;drag.axis=drag.onRoll&&Math.abs(dy)>Math.abs(dx)?'y':'x';
+      if(drag.axis==='x'){page.classList.add('ct-drag');drag.x=e.clientX;drag.f0=fx}}
+    if(drag.axis==='y'){const s=e.clientY-drag.ry;if(Math.abs(s)>34){ROLL.step(s<0?1:-1);drag.ry=e.clientY}return}
+    fx=drag.f0+(e.clientX-drag.x)/card.offsetWidth*RIGHT*1.1;
+    if(!TOUCH)ttx=clamp(-dy/card.offsetHeight*10,-6,6);
+    drag.hist.push([e.timeStamp,fx]);if(drag.hist.length>8)drag.hist.shift();kick()});
+  function release(e){if(!drag||(e&&e.pointerId!==drag.id))return;const d=drag;drag=null;page.classList.remove('ct-drag');
+    if(d.axis!=='x'){if(!d.axis&&d.onRoll&&!d.tgt.closest('button'))ROLL.step(1);kick();return}   // a tap on the reason picks the next one
+    const h=d.hist,a=h[0],b=h[h.length-1],v=b[0]>a[0]?(b[1]-a[1])/(b[0]-a[0])*1000:0,m=fx-d.base;   // deg/s over the last few moves
+    const dir=Math.abs(v)>280?Math.sign(v):Math.abs(m)>55?Math.sign(m):0;
+    ft=d.base+RIGHT*dir;fv=clamp(v*.5,-900,900);ttx=0;kick()}
+  card.addEventListener('pointerup',release);card.addEventListener('pointercancel',release);card.addEventListener('lostpointercapture',release);
+  card.addEventListener('dragstart',e=>e.preventDefault());
+  /* the mouse tilts it toward itself, a little */
+  page.addEventListener('pointermove',e=>{if(!live||drag||e.pointerType!=='mouse')return;const r=lift.getBoundingClientRect();
+    const nx=clamp((e.clientX-(r.left+r.width/2))/(r.width*.8),-1,1),ny=clamp((e.clientY-(r.top+r.height/2))/(r.height*1.1),-1,1);
+    ttx=-ny*6;tty=nx*9;kick()},{passive:true});
+  page.addEventListener('pointerleave',()=>{ttx=tty=0;kick()});
+
+  /* ---------- the island speaks (copied, opened...) ---------- */
+  let sayT=0,saying='';
+  function say(m,ms=2200){if(busy||menuOpen){toast(m);return}clearTimeout(sayT);saying=m;island.classList.add('note');setLabel(m);islandTo(closedLay(m),{spr:SPR.size});
+    sayT=setTimeout(unsay,ms)}
+  function unsay(leaving){clearTimeout(sayT);if(!saying)return;const m=saying;saying='';const mine=ilabel.dataset.t===m;
+    if(mine||(leaving&&!/back again/.test(ilabel.dataset.t||'')))island.classList.remove('note');
+    if(mine&&!menuOpen&&!busy){setLabel(LBL);islandTo(closedLay(),{spr:SPR.size})}}
+  /* something flies from the card up into the island; the island answers as it lands */
+  function fly(el,msg,{text}={}){const r=el.getBoundingClientRect(),i=island.getBoundingClientRect(),g=document.createElement('div');
+    if(text){g.textContent=el.textContent;Object.assign(g.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',font:getComputedStyle(el).font,
+      lineHeight:r.height+'px',color:'#fff',whiteSpace:'nowrap',textShadow:'0 0 14px var(--accent)',zIndex:49,pointerEvents:'none'})}
+    else{g.className='ct-spark';Object.assign(g.style,{transform:`translate(${r.left+r.width/2}px,${r.top+r.height/2}px)`,opacity:1})}
+    document.body.appendChild(g);
+    const dx=i.left+i.width/2-(r.left+r.width/2),dy=i.top+i.height/2-(r.top+r.height/2),base=text?'':`translate(${r.left+r.width/2}px,${r.top+r.height/2}px) `;
+    if(reduce){g.remove();say(msg);return}
+    g.animate([{transform:base+'translate(0,0) scale(1)',opacity:1},{transform:base+`translate(${dx*.3}px,${dy*.3-28}px) scale(${text?1.06:1.3})`,opacity:1,offset:.32},
+      {transform:base+`translate(${dx*.93}px,${dy*.93}px) scale(${text?.2:.7})`,opacity:.95,offset:.86},
+      {transform:base+`translate(${dx}px,${dy}px) scale(${text?.12:.4})`,opacity:0}],{duration:700,easing:'cubic-bezier(.5,0,.3,1)'}).finished.then(()=>g.remove(),()=>g.remove());
+    setTimeout(()=>say(msg),520)}
+
+  /* ---------- copy, mail, save ---------- */
+  async function copy(src){let ok=false;
+    try{await navigator.clipboard.writeText(EMAIL);ok=true}catch(e){
+      try{const t=document.createElement('textarea');t.value=EMAIL;t.setAttribute('readonly','');t.style.cssText='position:fixed;opacity:0;left:0;top:0';
+        document.body.appendChild(t);t.select();ok=document.execCommand('copy');t.remove()}catch(_){}}
+    const m=ok?'Copied '+EMAIL:'Copy it from the card: '+EMAIL;shownBack?fly(src,m):fly(page.querySelector('.ct-addr'),m,{text:true})}
+  const RS=[['an internship','Internship','#4DC8FF'],['a job','Job opportunity','#5CF59A'],['the DataLink Rover','DataLink Rover','#FF9F43'],
+    ['one of your projects','Your projects','#FFE14D'],['working together','Working together','#A98BFF'],['something else','Hello','#FF5A6A']];
+  /* every button that leaves the page (Gmail, Outlook, Yahoo, the mail app, LinkedIn, GitHub) plays the same send: a light
+     flies from the button up into the island, the island says what is opening, and only once that has been seen (1.1 s
+     after the click) does the other page open. Browsers only let a page open a window shortly after a click (Chrome and
+     Firefox 5 s, Safari less); if one refuses, the island asks for a second click, which opens it at once.
+     Gmail's and Outlook's compose links open a bare compose page (the one their own "pop out" button makes), so they get a
+     compose-sized window; Yahoo, LinkedIn and GitHub get a tab; the mail app is the device's mailto: handler. */
+  let pend=null,pendT=0;
+  function openOut(url,mode){if(mode==='app'){location.href=url;return true}
+    let f='';if(mode==='popup'){const w=Math.min(720,screen.availWidth-40),h=Math.min(760,screen.availHeight-60),
+      x=Math.round((window.screenX||0)+Math.max(0,(window.outerWidth-w)/2)),y=Math.round((window.screenY||0)+Math.max(0,(window.outerHeight-h)/2));
+      f=`popup,width=${w},height=${h},left=${x},top=${y}`}
+    const win=window.open(url,mode==='popup'?'rm-compose':'_blank',f);
+    if(win){try{win.opener=null}catch(_){}return true}return false}
+  /* the intro in reverse: a beam leaves the top middle of the card, shoots up to the island, and the island traces its own
+     outline from the bottom back up to the top; then it says what is opening */
+  function beamUp(msg){const i=island.getBoundingClientRect(),c=lift.getBoundingClientRect(),cx=c.left+c.width/2,ct=c.top+(c.height-card.offsetHeight)/2,
+      bx=i.left+i.width/2,by=i.bottom+2.5;
+    if(reduce){say(msg);return}
+    [beam,trace,...trP].forEach(el=>el.getAnimations().forEach(a=>a.cancel()));
+    pop(sp2,cx,ct,1);
+    Object.assign(beam.style,{display:'block',left:cx+'px',top:by+'px',height:Math.max(0,ct-by)+'px',transformOrigin:'50% 100%',opacity:'1'});
+    beam.animate([{transform:'scaleY(0)'},{transform:'scaleY(1)'}],{duration:Math.min(300,170+(ct-by)*.22),delay:90,easing:'cubic-bezier(.6,0,.9,.45)',fill:'both'}).finished.then(()=>{
+      pop(sp1,bx,by,.8);
+      beam.getAnimations().forEach(a=>a.cancel());beam.style.transformOrigin='50% 0';
+      beam.animate([{transform:'scaleY(1)',opacity:1},{transform:'scaleY(0)',opacity:.6}],{duration:300,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'}).finished.then(()=>{beam.style.display='none'},()=>{});
+      const o=2.5,iw=i.width+2*o,ih=i.height+2*o;
+      Object.assign(trace.style,{display:'block',width:iw+'px',height:ih+'px',transform:`translate(${i.left-o}px,${i.top-o}px)`,opacity:'1'});
+      trace.setAttribute('viewBox',`0 0 ${iw} ${ih}`);setHalves(trP,halves(iw,ih,ih/2,1));
+      trP.forEach(p=>p.animate([{strokeDashoffset:-1},{strokeDashoffset:0}],{duration:420,easing:'cubic-bezier(.3,0,.25,1)',fill:'forwards'}));
+      setTimeout(()=>{say(msg);trace.animate([{opacity:1},{opacity:0}],{duration:380,easing:'ease-out',fill:'forwards'}).finished.then(()=>{trace.style.display='none'},()=>{})},400)},()=>{})}
+  function leave(btn,name,url,mode,after){
+    if(pend&&pend.btn===btn){const p=pend;pend=null;clearTimeout(pendT);unsay();openOut(p.url,p.mode);after&&after();return}   // the second click opens it at once
+    if(sending)return;sending=true;
+    beamUp('Opening '+name);
+    setTimeout(()=>{sending=false;
+      if(!openOut(url,mode)){pend={btn,url,mode};say((TOUCH?'Tap':'Click')+' again to open '+name,4500);clearTimeout(pendT);pendT=setTimeout(()=>pend=null,4500);return}
+      after&&after()},reduce?0:1150)}
+  function mail(kind,btn){const r=RS[ROLL.i],e=encodeURIComponent,su=r[1],body=`Hi Radu,\n\nI'm writing about ${r[0]}.\n\n`;
+    const S={gmail:['Gmail',`https://mail.google.com/mail/u/0/?tf=cm&to=${e(EMAIL)}&su=${e(su)}&body=${e(body)}`,'popup'],
+      outlook:['Outlook',`https://outlook.live.com/mail/0/deeplink/compose?to=${e(EMAIL)}&subject=${e(su)}&body=${e(body)}`,'popup'],
+      yahoo:['Yahoo Mail',`https://compose.mail.yahoo.com/?to=${e(EMAIL)}&subject=${e(su)}&body=${e(body)}`,'tab'],
+      app:['your email app',`mailto:${EMAIL}?subject=${e(su)}&body=${e(body)}`,'app']}[kind];
+    if(S)leave(btn,S[0],S[1],S[2],()=>setTimeout(()=>{if(live)faceTo(0,-1)},1200))}
+  function vcf(){const u=URL.createObjectURL(new Blob([VCF],{type:'text/vcard'})),a=document.createElement('a');
+    a.href=u;a.download='Radu Matei.vcf';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);say('Saving my contact')}
+  function setPane(p){pane=p;card.querySelectorAll('.ct-pane').forEach(x=>{const on=x.dataset.paneId===p;x.classList.toggle('on',on);x.inert=!on});
+    const tabs=[...card.querySelectorAll('.ct-seg button')],t=tabs.find(b=>b.dataset.pane===p),seg=card.querySelector('.ct-seg');
+    tabs.forEach(b=>b.setAttribute('aria-selected',String(b===t)));seg.style.setProperty('--sw',t.offsetWidth+'px');seg.style.setProperty('--sx',(t.offsetLeft-3)+'px')}
+  card.addEventListener('click',e=>{
+    const ln=e.target.closest('a[href^="http"]');   // LinkedIn, GitHub: same send (a middle or modified click keeps the browser's own behaviour)
+    if(ln){if(!live||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;e.preventDefault();leave(ln,ln.textContent.trim(),ln.href,'tab');return}
+    const b=e.target.closest('[data-ct],[data-mail],[data-pane],[data-roll]');if(!b||!live)return;
+    if(b.dataset.roll){ROLL.step(+b.dataset.roll);return}
+    if(b.dataset.pane){setPane(b.dataset.pane);return}
+    if(b.dataset.mail){mail(b.dataset.mail,b);return}
+    const a=b.dataset.ct;
+    if(a==='copy')copy(b);
+    else if(a==='write'){setPane('write');faceTo(1)}
+    else if(a==='save'){setPane('save');faceTo(1)}
+    else if(a==='front')faceTo(0,-1);
+    else if(a==='vcf')vcf()});
+
+  /* ---------- the reason roller (lyrics style: the next and previous show only while it moves) ---------- */
+  const ROLL=(()=>{const box=card.querySelector('.ct-roll'),rw=box.querySelector('.ct-rw'),ul=box.querySelector('.ct-ul'),subj=card.querySelector('.ct-subj b');
+    const sp=RS.map(r=>{const s=document.createElement('span');s.textContent=r[0];s.style.color=r[2];rw.appendChild(s);return s});
+    let i=0,acc=0,rt=0,maxW=1,W=[];
+    function measure(){W=sp.map(s=>{s.style.display='inline-block';const w=s.offsetWidth;s.style.display='';return w});maxW=Math.max(...W,1);ul.style.width=maxW+'px';set(i,true)}
+    function set(k,quiet){i=clamp(k,0,RS.length-1);rw.style.transform=`translateY(${-i*100/RS.length}%)`;
+      sp.forEach((s,j)=>{s.classList.toggle('on',j===i);s.classList.toggle('nb',Math.abs(j-i)===1)});
+      box.style.color=RS[i][2];box.setAttribute('aria-valuetext',RS[i][0]);
+      ul.style.transform=`scaleX(${((W[i]||maxW)/maxW).toFixed(4)})`;subj.textContent=RS[i][1];
+      if(!quiet){box.classList.add('rolling');clearTimeout(rt);rt=setTimeout(()=>box.classList.remove('rolling'),650)}}
+    function step(d){set(i+d)}
+    function wheel(d){acc+=d;if(Math.abs(acc)>=50){step(Math.sign(acc));acc=0}clearTimeout(box._w);box._w=setTimeout(()=>acc=0,200)}
+    box.addEventListener('keydown',e=>{if(e.key==='ArrowDown'||e.key==='ArrowRight'){step(1);e.preventDefault()}if(e.key==='ArrowUp'||e.key==='ArrowLeft'){step(-1);e.preventDefault()}});
+    return{measure,step,wheel,get i(){return i}}})();
+
+  /* ---------- the way in ---------- */
+  function hideFx(){[trace,beam,sp1,sp2].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.style.display=el===sp1||el===sp2?'':'none'})}
+  function reset(){tok++;live=false;cancelAnimationFrame(raf);raf=0;drag=null;wheeling=false;clearTimeout(wT);hideFx();
+    page.classList.remove('ct-live','ct-drag');page.classList.add('ct-pre');
+    [front,back,out,...outP,...ENS,...ENS.map(e=>e.querySelector('.lz'))].forEach(el=>el&&el.getAnimations().forEach(a=>a.cancel()));
+    fx=fv=ft=tx=ty=ttx=tty=0;apply();front.inert=false;back.inert=true;shownBack=false;front.style.pointerEvents='';back.style.pointerEvents='none';out.style.opacity='0'}
+  function prep(n){if(n===page)reset()}
+  async function enter(){const k=++tok;root.classList.add('ct-on');setPane('write');ROLL.measure();
+    if(reduce){page.classList.remove('ct-pre');live=true;page.classList.add('ct-live');apply();return}
+    const ok=()=>k===tok&&current==='contact';
+    await sleep(60);if(!ok())return;
+    /* 1. the island's outline: two strokes from the top centre, meeting at the bottom */
+    const ir=island.getBoundingClientRect(),o=2.5,iw=ir.width+2*o,ih=ir.height+2*o;
+    Object.assign(trace.style,{display:'block',width:iw+'px',height:ih+'px',transform:`translate(${ir.left-o}px,${ir.top-o}px)`,opacity:'1'});
+    trace.setAttribute('viewBox',`0 0 ${iw} ${ih}`);setHalves(trP,halves(iw,ih,ih/2,1));
+    await draw(trP,480);if(!ok())return;
+    const bx=ir.left+ir.width/2,by=ir.bottom+o;
+    pop(sp1,bx,by,.8);trace.animate([{opacity:1},{opacity:0}],{duration:520,easing:'ease-out',fill:'forwards'});
+    /* 2. the beam: shot from where they met down to the top of the card */
+    const cr=lift.getBoundingClientRect(),cw=card.offsetWidth,ch=card.offsetHeight,top=cr.top+(cr.height-ch)/2;
+    Object.assign(beam.style,{display:'block',left:bx+'px',top:by+'px',height:Math.max(0,top-by)+'px',transformOrigin:'50% 0'});
+    await beam.animate([{transform:'scaleY(0)'},{transform:'scaleY(1)'}],{duration:Math.min(280,150+(top-by)*.22),easing:'cubic-bezier(.6,0,.9,.45)',fill:'forwards'}).finished.catch(()=>{});
+    if(!ok())return;
+    /* 3. it hits the card and traces it the same way; the beam's tail catches up with its head */
+    pop(sp2,cr.left+cr.width/2,top,1.1);
+    beam.getAnimations().forEach(a=>a.cancel());beam.style.transformOrigin='50% 100%';
+    beam.animate([{transform:'scaleY(1)',opacity:1},{transform:'scaleY(0)',opacity:.6}],{duration:300,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
+    out.setAttribute('viewBox',`0 0 ${cw} ${ch}`);setHalves(outP,halves(cw,ch,parseFloat(getComputedStyle(front).borderTopLeftRadius)||28,.9));out.style.opacity='1';
+    const outline=draw(outP,640);
+    await sleep(400);if(!ok())return;
+    /* 4. the glass fills in behind the light, then the lines are engraved one after another */
+    front.animate([{opacity:0},{opacity:1}],{duration:460,easing:'cubic-bezier(.3,0,.2,1)',fill:'backwards'});
+    page.classList.remove('ct-pre');
+    ENS.forEach((el,j)=>{const lz=el.querySelector('.lz'),d=260+j*85,D=620,E='cubic-bezier(.5,0,.2,1)';
+      el.animate([{clipPath:'inset(-30% 100% -30% -3%)'},{clipPath:'inset(-30% -3% -30% -3%)'}],{duration:D,delay:d,easing:E,fill:'backwards'});
+      if(lz)lz.animate([{transform:'translateX(-100%)',opacity:0},{opacity:1,offset:.06},{transform:'translateX(0)',opacity:1,offset:.85},{transform:'translateX(0)',opacity:0}],{duration:D+120,delay:d,easing:E,fill:'backwards'})});
+    live=true;page.classList.add('ct-live');apply();
+    await outline;if(!ok())return;
+    out.animate([{opacity:1},{opacity:0}],{duration:900,delay:200,easing:'ease-out',fill:'forwards'}).finished.then(()=>{if(ok()){out.getAnimations().forEach(a=>a.cancel());out.style.opacity='0'}},()=>{});
+    beam.style.display='none'}
+  function stop(){tok++;live=false;cancelAnimationFrame(raf);raf=0;drag=null;clearTimeout(wT);wheeling=false;hideFx();root.classList.remove('ct-on');page.classList.remove('ct-drag');unsay(true)}
+  /* called from finish(): o is the page we left, n the one we arrived on */
+  function left(o,n){if(o===page&&n!==page)stop();if(n===page)enter()}
+  addEventListener('resize',()=>{if(live)ROLL.measure()});
+  reset();
+  return{prep,left}})();
 
 /* ---------- ambient light: the textures and particles of .abg (see its CSS) ----------
    Each page's layer is filled once: three pools (the page's colour, its neighbour in the spectrum, the season's tint) and
