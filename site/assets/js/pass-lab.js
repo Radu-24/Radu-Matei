@@ -417,9 +417,13 @@
       checks.breach.querySelector('button').hidden = !pw || bs === 'clean' || bs === 'breached' || bs === 'checking';
       if (pw) { for (const k in times) times[k].textContent = e.crack[k];
         tokens.replaceChildren(...(e.matches.length ? e.matches.map(m => { const r = document.createElement('div'); r.className = 'ps-tok';
-          const t = document.createElement('code'); t.textContent = m.token; const w = document.createElement('span'); w.textContent = m.what; r.append(t, w); return r })
+          const t = document.createElement('code'); t.className = 'ps-mask'; t.tabIndex = 0;   // hidden like the password: hover or focus fades the dots into the word
+          t.setAttribute('aria-label', 'Hidden part of your password; focus to show it');
+          const dots = document.createElement('span'); dots.className = 'ps-dots'; dots.setAttribute('aria-hidden', 'true'); dots.textContent = '•'.repeat(Math.min(12, Array.from(m.token).length));
+          const word = document.createElement('span'); word.className = 'ps-word'; word.textContent = m.token; t.append(dots, word); const w = document.createElement('span'); w.textContent = m.what; r.append(t, w); return r })
           : [Object.assign(document.createElement('p'), {className: 'ps-none', textContent: 'No common words or patterns found.'})]));
         tips.textContent = e.suggestions.join(' ') + (e.truncated ? ' Only the first 64 characters were checked.' : '') }
+      else { for (const k in times) times[k].textContent = ''; tokens.replaceChildren(); tips.textContent = '' }   // nothing of an old password stays behind
       renderLeak();
     }
     let hashSeq = 0;
@@ -543,29 +547,33 @@
     /* ---- the vault ---- */
     const vNote = $('#ps-v-note'), vPw = $('#ps-v-pw'), vLock = $('#ps-v-lock'), vOut = $('#ps-v-out'), vSalt = $('#ps-v-salt'), vIv = $('#ps-v-iv'), vCt = $('#ps-v-ct'),
       vTime = $('#ps-v-time'), vUpw = $('#ps-v-upw'), vOpen = $('#ps-v-open'), vRes = $('#ps-v-res'), vSteps = $$('.ps-step'), vault = $('.ps-vault');
-    let box = null, vBusy = false;
+    let box = null, vBusy = false, vEpoch = 0;   // vEpoch: bumped by a reset, so an unfinished lock or unlock can't write anything back
     const stepOn = (i, s) => vSteps.forEach((el, k) => { el.classList.toggle('on', k === i && s === 'on'); el.classList.toggle('done', k < i || (k === i && s === 'done')) });
     vLock.addEventListener('click', async () => {
       if (vBusy) return; const note = vNote.value.trim(), pw = vPw.value;
       if (!note || !pw) { (note ? vPw : vNote).focus(); (note ? vPw : vNote).parentNode.animate([{translate: '0 0'}, {translate: '-5px 0'}, {translate: '5px 0'}, {translate: '0 0'}], {duration: 320}); return }
-      vBusy = true; vLock.disabled = true; vault.classList.add('busy'); vault.classList.remove('locked', 'open'); vRes.textContent = ''; vRes.className = 'ps-vres';
+      const my = vEpoch; vBusy = true; vLock.disabled = true; vault.classList.add('busy'); vault.classList.remove('locked', 'open'); vRes.textContent = ''; vRes.className = 'ps-vres';
       const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
-      stepOn(0, 'on'); await pause(260); stepOn(1, 'on');
+      stepOn(0, 'on'); await pause(260); if (my !== vEpoch) return; stepOn(1, 'on');
       const t0 = performance.now(), key = await deriveKey(pw, salt), dt = performance.now() - t0;
+      if (my !== vEpoch) return;
       stepOn(2, 'on'); await pause(260);
       const ct = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv}, key, enc.encode(note)));
+      if (my !== vEpoch) return;
       stepOn(3, 'done');
       box = {salt, iv, ct}; vPw.value = '';
-      vTime.textContent = `600,000 rounds took ${dt < 1000 ? Math.round(dt) + ' ms' : (dt / 1000).toFixed(1) + ' s'} here. That is the point: every guess costs an attacker the same.`;
+      vTime.textContent = `600,000 rounds took ${dt < 1000 ? Math.round(dt) + ' ms' : (dt / 1000).toFixed(1) + ' s'} here. That is your device’s speed, not a benchmark; the point is that every guess costs an attacker all 600,000 rounds too.`;
       vault.classList.remove('busy'); vault.classList.add('locked');
       decode(vSalt, hexOf(salt)); decode(vIv, hexOf(iv)); decode(vCt, b64(ct), {ms: 900});
       vBusy = false; vLock.disabled = false; vUpw.value = '';
     });
     vOpen.addEventListener('click', async () => {
       if (!box || vBusy) return; vBusy = true; vOpen.disabled = true; vRes.className = 'ps-vres wait'; vRes.textContent = 'Deriving the key again…';
-      try { const key = await deriveKey(vUpw.value, box.salt), pt = dec.decode(await crypto.subtle.decrypt({name: 'AES-GCM', iv: box.iv}, key, box.ct));
+      const my = vEpoch, b0 = box;
+      try { const key = await deriveKey(vUpw.value, b0.salt), pt = dec.decode(await crypto.subtle.decrypt({name: 'AES-GCM', iv: b0.iv}, key, b0.ct));
+        if (my !== vEpoch) return;
         vRes.className = 'ps-vres ok'; decode(vRes, pt); vault.classList.add('open') }
-      catch (e) { vRes.className = 'ps-vres bad'; vRes.textContent = 'Wrong password: the GCM tag doesn’t match, so not one byte decrypts.';
+      catch (e) { if (my !== vEpoch) return; vRes.className = 'ps-vres bad'; vRes.textContent = 'Wrong password: the GCM tag doesn’t match, so not one byte decrypts.';
         if (!reduce()) vUpw.parentNode.animate([{translate: '0 0'}, {translate: '-6px 0'}, {translate: '6px 0'}, {translate: '-3px 0'}, {translate: '0 0'}], {duration: 380}) }
       vBusy = false; vOpen.disabled = false;
     });
@@ -617,6 +625,8 @@
     P.update = update; P.render = render; P.placePill = placePill; P.placeSeg = placeSeg; P.generate = generate; P.setCur = setCur;
     P.clear = () => {
       clearTimeout(typing); input.value = ''; input.type = 'password'; eye.classList.remove('on'); st.breach = {status: 'idle'}; update();
+      [vSalt, vIv, vCt, vRes, out].forEach(e => { if (e._dec) { cancelAnimationFrame(e._dec); e._dec = 0 } });   // a decode still running would write its text back
+      vEpoch++; vBusy = false; vLock.disabled = false; vOpen.disabled = false;
       vNote.value = ''; vPw.value = ''; vUpw.value = ''; box = null; vault.classList.remove('locked', 'open', 'busy'); vRes.textContent = ''; stepOn(-1);
       [vSalt, vIv, vCt].forEach(e => (e.textContent = '')); vTime.textContent = '';
       lastGen = ''; out.textContent = ''; bits.textContent = '—'; blab.textContent = ''; lres.textContent = ''; lnote.textContent = '';

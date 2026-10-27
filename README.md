@@ -18,18 +18,18 @@ My personal website: who I am, what I have built, my thesis robot, the DataLink 
 
 [Password Helper](https://github.com/Radu-24/Password-Helper) is my desktop password manager. Its page opens from Projects: the title glides off the list, and the card's little password field grows into the page's own. The parts of the app work right on the page (`site/assets/js/pass-lab.js`):
 
-- **The checker.** A strength estimate as you type, with a meter, the three checks the app uses (from NIST SP 800-63B-4: at least 15 characters, hard to guess, not in known breaches), the time to crack for four kinds of attack, and the patterns an attacker would try first. The app uses zxcvbn-ts with full English and Romanian dictionaries (about 8 MB). The page uses the same method with small built-in word lists, so its scores are close to the app's but not identical.
+- **The checker.** A strength estimate as you type, with a meter, the three checks the app uses (from NIST SP 800-63B-4: at least 15 characters, hard to guess, not in known breaches), the time to crack for four kinds of attack, and the patterns an attacker would try first. Those patterns are parts of the password, so they show as dots; hovering over one (or focusing it) fades the dots into the word. The app uses zxcvbn-ts with full English and Romanian dictionaries (about 8 MB). The page uses the same method with small built-in word lists, so its scores are close to the app's but not identical.
 - **The leak check.** It shows k-anonymity at work. The page hashes the password with SHA-1, sends only the first 5 of its 40 characters to [Have I Been Pwned](https://haveibeenpwned.com/Passwords), and compares the answer on the page. It runs only when the visitor presses the button. It asks for a padded answer (`Add-Padding`); if a browser won't send that header, it asks without it.
 - **The generator.** Passwords and passphrases, with the same rules as the app: the browser's secure random generator, with rejection sampling so no character is likelier than another. Passphrases use the EFF Large Wordlist (`site/assets/js/eff-wordlist.js`), which loads only when a passphrase is asked for.
 - **The vault.** A visitor can lock a note of their own with the vault's real steps (PBKDF2-SHA256 with 600,000 rounds, then AES-256-GCM in the browser's Web Crypto), then unlock it again or watch a wrong password fail.
 - **Verification codes.** A live TOTP code (RFC 6238) from a public demo key. It matches what any authenticator app shows for that key.
 - Then the security model, a few numbers and the app's story, and a glass dock at the bottom that follows the part in view.
 
-Nothing is stored. Everything typed on the page is emptied when the visitor leaves it. The background is the app's matrix rain, redrawn as falling hashes in the page's colour: a few strips drawn once and moved by the graphics card.
+Nothing is stored. Everything typed on the page is emptied when the visitor leaves it, including the patterns and results shown for it, and a lock or unlock still running is dropped. The background is the app's matrix rain, redrawn as falling hashes in the page's colour: a few strips drawn once and moved by the graphics card.
 
 ## The time of year
 
-The visitor's own calendar picks a theme: an event while one is on, otherwise the season. Each theme dresses the site in three places:
+The visitor's own calendar picks a theme: an event while one is on, otherwise the season, which shows for about four weeks at its heart. The rest of the year the site has no theme. Each theme dresses the site in three places:
 
 - **The edges of the screen**: pieces in the corners or along the top, over the page.
 - **The scene**: pictures in the background of every page, behind the content.
@@ -45,12 +45,12 @@ The ambient light also takes on the theme's colour and particles. A project's ow
 | Easter (Orthodox) | the week before Easter Sunday to Easter Monday | painted eggs on ribbons | painted eggs in the grass | bunny ears peeking out | petals and eggs |
 | Halloween | 17 Oct – 1 Nov | cobwebs, a spider letting itself down | the moon, bats, jack-o'-lanterns | a spider on a thread | bats |
 | Christmas | 1 Dec – 7 Jan | a string of lights | snowy hills and firs | snow and holly | snow |
-| Spring | March to May | a blossom branch | butterflies | a butterfly, which flies off | petals |
-| Summer | June to August | | a sunset between palm trees | a little palm tree | sparkles |
-| Autumn | September to November | a branch in autumn colours | fallen leaves | a maple leaf, which blows away | leaves |
-| Winter | December to February | icicles | snowy hills and firs | snow and icicles | snow |
+| Spring | 10 Apr – 7 May | a blossom branch | butterflies | a butterfly, which flies off | petals |
+| Summer | 10 Jul – 6 Aug | | a sunset between palm trees | a little palm tree | sparkles |
+| Autumn | 18 Sep – 15 Oct | a branch in autumn colours | fallen leaves | a maple leaf, which blows away | leaves |
+| Winter | 10 Jan – 6 Feb | icicles | snowy hills and firs | snow and icicles | snow |
 
-The pictures are drawn once and only moved by the graphics card, the same way as the ambient light, and they hold still on the lighter quality tiers and with reduced motion. To preview a theme, add `?season=` to the address with one of `halloween`, `xmas`, `newyear`, `birthday`, `easter`, `martisor`, `spring`, `summer`, `autumn` or `winter`. The dates and colours are in `SEASON` in `index.html`, and the pictures are in `assets/js/themes.js`.
+The pictures are drawn once and only moved by the graphics card, the same way as the ambient light, and they hold still on the lighter quality tiers and with reduced motion. To preview a theme, add `?season=` to the address with one of `halloween`, `xmas`, `newyear`, `birthday`, `easter`, `martisor`, `spring`, `summer`, `autumn`, `winter` or `none`. The dates and colours are in `SEASON` in `index.html`, and the pictures are in `assets/js/themes.js`.
 
 To give a new page the moving background, add `<div class="abg" data-abg="pools" aria-hidden="true"></div>` right after its `.pbg`. Use `pools` for the pools alone, or `spectrum`, `scan`, `rays`, `waves` or `rings` for one of the motions. The colours come from the page's `--pc`.
 
@@ -123,11 +123,11 @@ The site contains no passwords, keys or private addresses.
 
 ## Privacy
 
-The site sets no cookies and has no analytics or tracking. Fonts and three.js are part of the site, so a visitor's browser
+The site sets no cookies, stores nothing on the visitor's device (the menu hint is remembered in memory only, until a reload) and has no analytics or tracking (the browser may still cache the site files as usual). The home page terminal keeps typed commands on screen until a reload. The full privacy notice (controller, hosting, the optional leak check, legal bases, transfers, rights, ANSPDCP) has its own page, opened from the home page footer (it is not in the menu; such pages are listed in `EXTRA` in `index.html`). Fonts and three.js are part of the site, so a visitor's browser
 contacts only the host. The one exception is the leak check on the Password Helper page. When a visitor presses its button, the first 5
 characters of the password's SHA-1 hash go to Have I Been Pwned (`api.pwnedpasswords.com`, served through Cloudflare), which sees that
 request like any website would. The password itself never leaves the page. GitHub Pages keeps its own server logs, including IP
-addresses. The home page footer says the same.
+addresses. The Privacy page says the same.
 
 A static site cannot keep a secret. Every visitor downloads everything in `site/`, so never put a key or password there. If the tools ever need one, put it in a `.env` file. `.gitignore` keeps `.env` files and the Python `.venv` folder out of the repository.
 

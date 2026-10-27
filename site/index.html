@@ -299,9 +299,8 @@ button{font:inherit;color:inherit}
 
 .home{padding-top:15vh;padding-bottom:14vh}
 .hs{margin-top:14vh}
-.foot{margin-top:14vh;padding-top:22px;border-top:1px solid rgba(255,255,255,.08);display:grid;grid-template-columns:auto 1fr;gap:8px 40px;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.foot{margin-top:14vh;padding-top:22px;border-top:1px solid rgba(255,255,255,.08);display:grid;grid-template-columns:1fr;gap:8px 40px;font-size:12.5px;line-height:1.55;color:var(--muted)}
 .foot p{margin:0;max-width:68ch}.foot .c{color:#C2C7D4;font-weight:500}.foot .cr{grid-column:2;font-family:var(--mono);font-size:11.5px;color:#5d6375}
-@media (max-width:700px){.foot{grid-template-columns:1fr}.foot .cr{grid-column:1}}
 .hh{font-size:clamp(30px,4.4vw,52px);letter-spacing:-.035em;margin:0 0 28px;line-height:1}
 
 /* ---------- liquid glass: one material for every surface ----------
@@ -963,6 +962,13 @@ button.pj{cursor:pointer}
 .ps-times dt{color:#AEB4C4;font-size:14.5px}.ps-times dd{margin:0;font:500 14px var(--mono);color:#EEF0F8;text-align:right;white-space:nowrap}
 #ps-tokens{display:grid;gap:8px}
 .ps-tok{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:14px;color:#AEB4C4}
+.ps-mask{display:inline-grid;cursor:help;outline:none}
+.ps-mask:focus-visible{box-shadow:0 0 0 2px var(--lc)}
+.ps-mask>span{grid-area:1/1;text-align:center;white-space:pre;transition:opacity .35s,filter .35s}
+.ps-dots{letter-spacing:.08em}
+.ps-word{opacity:0;filter:blur(4px)}
+.ps-mask:hover .ps-dots,.ps-mask:focus .ps-dots{opacity:0;filter:blur(4px)}
+.ps-mask:hover .ps-word,.ps-mask:focus .ps-word{opacity:1;filter:none}
 .ps-tok code{padding:3px 9px;border-radius:8px;font:500 13.5px var(--mono);color:#fff;background:color-mix(in srgb,var(--lc) 22%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--lc) 45%,transparent)}
 .ps-none{margin:0;color:#8C92A6;font-size:14px}
 /* the sections below */
@@ -1107,6 +1113,23 @@ button.pj{cursor:pointer}
 }
 @media (prefers-reduced-motion:reduce){.ps-rain canvas{animation:none!important;transform:translate3d(0,var(--y0),0)}.ps-rv{animation:none!important}}
 
+/* the privacy notice: folded away in the footer, opened by its summary or by any "privacy notice" link */
+.p-privacy{--pc:#A98BFF}
+.ft-top{grid-column:1/-1;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:28px 32px;padding:18px 0 34px}
+.ft-name{margin:0 0 10px;font-size:22px;font-weight:600;color:#fff;letter-spacing:-.01em}.ft-name span{color:var(--pc)}
+.ft-tag{margin:0;font-size:14px;color:var(--muted)}
+.ft-col{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.ft-col h2{margin:4px 0 6px;font:600 11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pc)}
+.foot button,.foot a{padding:0;border:0;background:none;font:inherit;font-size:14px;color:#AEB4C4;text-decoration:none;cursor:pointer;transition:color .2s}
+.foot button:hover,.foot a:hover,.foot button:focus-visible,.foot a:focus-visible{color:#fff}
+.ft-bot{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.06)}
+.ft-bot p{margin:0}.ft-links{display:flex;gap:22px;align-items:baseline}.ft-links span{font-size:12.5px}
+.foot .cr{grid-column:1/-1}
+@media (max-width:820px){.ft-top{grid-template-columns:1fr 1fr}.ft-id{grid-column:1/-1}}
+.pv-doc{max-width:78ch;margin-top:26px;padding:8px 30px 26px;border-radius:24px;font-size:15px;line-height:1.65;color:#C9CEDA}
+.pv-doc h2{margin:24px 0 6px;font-size:17px;color:#fff}.pv-doc p{margin:0}.pv-doc a{color:var(--pc)}
+@media (max-width:600px){.pv-doc{padding:4px 18px 20px}}
+.ps-fine a{color:#AEB4C4}
 .toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:60;transform:translate(-50%,14px);opacity:0;padding:11px 18px;border-radius:999px;font-size:14px;
   background:radial-gradient(120% 160% at 28% -20%,rgba(255,255,255,.16),transparent 60%),rgba(20,22,30,.62);
   box-shadow:inset 1.2px 1.2px 0 rgba(255,255,255,.6),inset -1px -1px 0 rgba(255,255,255,.18),inset 0 10px 16px -12px rgba(255,255,255,.3),0 16px 40px rgba(0,0,0,.5);
@@ -1200,8 +1223,13 @@ button.pj{cursor:pointer}
     </div>
 
     <footer class="foot">
-      <p class="c">© 2026 Radu Matei. All rights reserved.</p>
-      <p>No cookies, no analytics, no tracking. While this tab is open, it remembers one thing: whether you have found the menu, so the hint stops. Fonts and code load from this site, so your browser contacts no one else, unless you ask the Password Helper page to check a password for leaks: then the first 5 characters of its hash go to Have I Been Pwned. The host, GitHub Pages, keeps standard server logs, including IP addresses, for security.</p>
+      <div class="ft-top">
+        <div class="ft-id"><p class="ft-name">Radu <span>Matei</span></p><p class="ft-tag">Telecom engineer · Brașov, România</p></div>
+        <nav class="ft-col" aria-label="Pages"><h2>Pages</h2><button data-go="projects">Projects</button><button data-go="record">Record</button><button data-go="about">About</button><button data-go="contact">Contact</button><button data-go="privacy">Privacy</button></nav>
+        <nav class="ft-col" aria-label="Projects"><h2>Projects</h2><button data-go="projects">DataLink Rover</button><button data-go="projects">Password Helper</button><a href="https://github.com/Radu-24/Password-Helper" target="_blank" rel="noopener">Password Helper on GitHub <i aria-hidden="true">↗</i></a></nav>
+        <nav class="ft-col" aria-label="Contact"><h2>Contact</h2><a href="mailto:ramatei@gmail.com">ramatei@gmail.com</a><a href="https://github.com/Radu-24" target="_blank" rel="noopener">GitHub <i aria-hidden="true">↗</i></a></nav>
+      </div>
+      <div class="ft-bot"><p>© 2026 Radu Matei · Brașov, România</p><p class="ft-links"><button data-go="privacy">Privacy notice</button><span>No cookies · no tracking</span></p></div>
       <p class="cr">Type: Instrument Sans and IBM Plex Mono (SIL OFL). 3D: three.js (MIT).</p>
     </footer>
   </div></div></section>
@@ -1434,7 +1462,7 @@ last = t</pre></div>
       <section class="ps-hero" data-sec="check" aria-labelledby="ps-title">
         <p class="ps-k">02 · Desktop app · Electron</p>
         <h1 class="ps-t" id="ps-title">Password Helper</h1>
-        <p class="ps-s">A password manager for your computer, and the strength checker it grew out of. The checker works right here: it runs in this page, and nothing you type is stored or sent.</p>
+        <p class="ps-s">A password manager for your computer, and the strength checker it grew out of. The checker works right here: it runs in your browser and nothing you type is stored. Only the optional leak check below contacts anyone, and it sends just 5 characters of a hash.</p>
         <div class="ps-field">
           <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 018 0v3"/></svg>
           <input id="ps-in" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type a password" aria-label="Password to check" aria-describedby="ps-verdict">
@@ -1463,7 +1491,7 @@ last = t</pre></div>
           <p class="ps-legend"><span><i class="s"></i>sent</span><span><i></i>never leaves this page</span></p>
           <div class="ps-lane"><div class="ps-node a"><b>This page</b><span>hashes, compares</span></div><div class="ps-node b"><b>Have I Been Pwned</b><span>api.pwnedpasswords.com</span></div><span class="ps-n" id="ps-leak-n"></span></div>
           <div class="ps-row"><button class="btn p" type="button" id="ps-leak-go" disabled>Check this password</button><p class="ps-res" id="ps-leak-res" aria-live="polite">Type a password at the top first.</p></div>
-          <p class="ps-fine">Those 5 characters go to Have I Been Pwned only when you press the button, and the page asks for a padded answer so its size gives nothing away. Nothing is stored.</p>
+          <p class="ps-fine">Only when you press the button: those 5 hash characters go to Have I Been Pwned (served through Cloudflare), which, like any website, also sees your IP address and browser headers and may log them. The password never leaves this page and nothing is stored here. <a href="https://haveibeenpwned.com/Privacy" target="_blank" rel="noopener">Their privacy policy</a> · <a href="#privacy" class="pv-link">this site’s privacy notice</a></p>
         </div>
       </section>
 
@@ -1557,6 +1585,26 @@ last = t</pre></div>
     <div class="cards r"><article class="card lq"><h3>Email</h3><p>[your email]</p></article><article class="card lq"><h3>LinkedIn</h3><p>[linkedin.com/in/…]</p></article><article class="card lq"><h3>GitHub</h3><p>[github.com/…]</p></article></div>
     <div class="row r"><button class="btn s" data-go="home">Back home</button></div>
   </div></div></section>
+  <section class="page p-privacy" id="pg-privacy" aria-label="Privacy notice"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="pools" aria-hidden="true"></div><div class="wash"></div><div class="pc">
+    <h1 class="ttl r"><span class="tt">Privacy</span><span class="tb" aria-hidden="true">Privacy</span></h1><p class="lead r">What happens to your data on this site. Short version: no cookies, no tracking, nothing stored on your device.</p>
+    <article class="pv-doc lq r">
+        <h2>Who is responsible</h2>
+        <p>Radu Matei, Brașov, Romania, is the controller for this website. Contact for anything about your data: <a href="mailto:ramatei@gmail.com">ramatei@gmail.com</a>.</p>
+        <h2>What this site does not do</h2>
+        <p>It sets no cookies, writes nothing to your browser's storage (no localStorage, sessionStorage, IndexedDB or similar), and uses no analytics, tracking, advertising or social-media plugins. Your browser may keep its usual cache of the site's files (pages, fonts, images); that is your browser's normal behaviour, holds nothing about you, and you can clear it at any time. Fonts and code load from this site itself. What you type stays in your browser's memory while the page is open and is never sent to me. On the Password Helper page, everything typed there (the checker, generator and vault demo) is cleared when you leave that page. The terminal on the home page keeps the commands you typed on screen until you reload or close the tab.</p>
+        <h2>Hosting: GitHub Pages</h2>
+        <p>The site is hosted by GitHub, Inc. (USA). To deliver the pages and protect the service, GitHub records your IP address and technical request data (such as browser type and time) in server logs. Legal basis: legitimate interest in running a secure website (GDPR Art. 6(1)(f)). This is necessary to deliver and protect a public website, uses only the data any web server receives, and is what visitors expect when they open a website, so it does not override your interests. GitHub keeps these logs for as long as it says it needs them to run and secure its service and meet legal obligations, as described in its privacy statement; it does not publish a fixed period for Pages logs. I cannot see, change or shorten them. Data may be processed in the USA; GitHub covers such transfers with its own safeguards (such as the EU-US Data Privacy Framework and Standard Contractual Clauses). See the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">GitHub Privacy Statement</a>.</p>
+        <h2>Optional leak check: Have I Been Pwned</h2>
+        <p>Only if you press “Check this password” on the Password Helper page, your browser sends the first 5 characters of the password’s SHA-1 hash to Have I Been Pwned (api.pwnedpasswords.com, run by Troy Hunt and served through Cloudflare). The password itself and its full hash never leave your browser; the request carries no cookies and no referrer. Like any website you visit, Have I Been Pwned and Cloudflare receive your IP address and normal browser headers and may keep them in operational logs. Legal basis: my legitimate interest in providing the check you asked for (GDPR Art. 6(1)(f)); it runs only on your request and sends the least data the check needs (a 5-character prefix shared by hundreds of other passwords), so it does not override your interests. Have I Been Pwned is run from Australia, which has no EU adequacy decision, and served through Cloudflare (USA), which covers transfers under the EU-US Data Privacy Framework and Standard Contractual Clauses. Because this transfer happens only when you choose to press the button after reading this, it rests on your explicit consent (GDPR Art. 49(1)(a)); the risk is that your IP address is handled outside the EU without the same legal protection. They keep their logs for the periods described in their policies: see the <a href="https://haveibeenpwned.com/Privacy" target="_blank" rel="noopener">Have I Been Pwned privacy policy</a> and the <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare privacy policy</a>. If you do not press the button, nothing is sent.</p>
+        <h2>External links</h2>
+        <p>Links to GitHub and other sites open those sites, which have their own privacy policies. Nothing is sent to them until you click.</p>
+        <h2>Your rights</h2>
+        <p>Under the GDPR you can ask for access to, correction or deletion of your data, restriction of processing and data portability, and you can object to processing based on legitimate interest. This site itself keeps no personal data, so requests about hosting or leak-check logs may also need to go to GitHub or Have I Been Pwned, but you can always write to me and I will help. You can also complain to the Romanian data protection authority, ANSPDCP (<a href="https://www.dataprotection.ro" target="_blank" rel="noopener">dataprotection.ro</a>), or to the authority in your own EU country.</p>
+        <h2>Changes</h2>
+        <p>If the site starts processing data in a new way (for example a contact form), this notice will be updated first. Last updated: October 2026.</p>
+    </article>
+    <div class="row r"><button class="btn s" data-go="home">Back home</button></div>
+  </div></div></section>
   <div id="dim" aria-hidden="true"></div>
   <div id="dl-fly" aria-hidden="true"></div>
 </div></div>
@@ -1643,24 +1691,15 @@ const TOUCH=matchMedia('(hover:none) and (pointer:coarse)').matches;root.classLi
 const LIVE=new Set(['island','back']);   /* on touch devices only these keep live refraction: small, and always on screen */
 
 /* ---------- visitor preferences ----------
-   For now they live only in this tab (sessionStorage): gone when the tab closes, never sent anywhere. When the site gets a
-   consent banner, PREFS.persist(true) after the visitor agrees keeps the same keys in localStorage across visits, and
-   PREFS.persist(false) wipes them. Storage can be blocked (private modes, settings), so every call is wrapped. */
-const PREFS=(()=>{const P='rm:',KEYS=['menu-found'];
-  const open=n=>{try{const x=window[n];x.setItem(P+'t','1');x.removeItem(P+'t');return x}catch(e){return null}};
-  const ses=open('sessionStorage');let st=ses;
-  try{if(localStorage.getItem(P+'consent')==='1')st=open('localStorage')||ses}catch(e){}
-  const get=k=>{try{return st?st.getItem(P+k):null}catch(e){return null}},set=(k,v)=>{try{st&&st.setItem(P+k,String(v))}catch(e){}};
-  function persist(on){const ls=open('localStorage');if(!ls)return;
-    try{if(on){ls.setItem(P+'consent','1');KEYS.forEach(k=>{const v=get(k);if(v!=null)ls.setItem(P+k,v)});st=ls}
-      else{ls.removeItem(P+'consent');KEYS.forEach(k=>ls.removeItem(P+k));st=ses}}catch(e){}}
-  return{get,set,persist}})();
+   Kept only in memory for the current page load: nothing is written to the visitor's device (no cookies, no
+   sessionStorage or localStorage), so no consent is needed. A reload forgets them. */
+const PREFS=(()=>{const m=new Map();return{get:k=>m.has(k)?m.get(k):null,set:(k,v)=>m.set(k,String(v)),persist(){}}})();
 
 /* ---------- the time of year ----------
    The visitor's own calendar picks what the site wears: an event while one is on (from a week to five weeks around it, see
    below), otherwise the season. Here it tints the ambient light (one pool and a few particles, see AMBIENT); the pictures
    (cobwebs and bats, a string of lights, snow on the island, palms...) are in assets/js/themes.js. Nothing is stored or sent.
-   Preview any of them with ?season=halloween (or xmas, newyear, birthday, easter, martisor, spring, summer, autumn, winter). */
+   Preview any of them with ?season=halloween (or xmas, newyear, birthday, easter, martisor, spring, summer, autumn, winter, none). */
 const SEASON=(()=>{const now=new Date(),Y=now.getFullYear(),day=(y,m,d)=>new Date(y,m-1,d),plus=(t,n)=>new Date(t.getFullYear(),t.getMonth(),t.getDate()+n);
   const T=day(Y,now.getMonth()+1,now.getDate());
   /* Easter as Romania keeps it (Orthodox): the Julian computus (Meeus), moved to the Gregorian calendar (+13 days, 1900-2099) */
@@ -1677,7 +1716,9 @@ const SEASON=(()=>{const now=new Date(),Y=now.getFullYear(),day=(y,m,d)=>new Dat
     ['halloween',day(y,10,17),day(y,11,1)],
     ['xmas',day(y,12,1),day(y+1,1,7)]]};
   const all=[...list(Y-1),...list(Y),...list(Y+1)],order=['newyear','birthday','easter','martisor','halloween','xmas'];
-  const season=m=>m<3||m===12?'winter':m<6?'spring':m<9?'summer':'autumn';
+  /* the seasons show only for about four weeks each, at their heart; the rest of the year the site wears no theme */
+  const season=t=>{const y=t.getFullYear(),S=[['winter',day(y,1,10),day(y,2,6)],['spring',day(y,4,10),day(y,5,7)],
+    ['summer',day(y,7,10),day(y,8,6)],['autumn',day(y,9,18),day(y,10,15)]].find(x=>t>=x[1]&&t<=x[2]);return S?S[0]:'none'};
   /* the look of each in the ambient light: two tint colours, the particles and their colours */
   const LOOK={
     halloween:{tint:['#FF7A1A','#9B5BFF'],fx:'ember',cols:['#FFB15A','#FF7A1A','#FFD08A']},
@@ -1689,11 +1730,12 @@ const SEASON=(()=>{const now=new Date(),Y=now.getFullYear(),day=(y,m,d)=>new Dat
     spring:{tint:['#8EF5B0','#FFC6DA'],fx:'petal',cols:['#FFD3E2','#FFFFFF','#FFC6DA']},
     summer:{tint:['#FFC861','#FF9F43'],fx:'mote',cols:['#FFE2A0','#FFC861']},
     autumn:{tint:['#FF9A3C','#C2541F'],fx:'leaf',cols:['#FF9A3C','#E0662A','#F4B23C']},
-    winter:{tint:['#BFDFFF','#FFFFFF'],fx:'snow',cols:['#FFFFFF']}};
+    winter:{tint:['#BFDFFF','#FFFFFF'],fx:'snow',cols:['#FFFFFF']},
+    none:{tint:null,fx:null,cols:[]}};
   const ask=(new URLSearchParams(location.search).get('season')||'').toLowerCase(),
     on=order.map(k=>all.find(x=>x[0]===k&&T>=x[1]&&T<=x[2])).find(Boolean),
-    id=LOOK[ask]?ask:on?on[0]:season(T.getMonth()+1);
-  const look=LOOK[id];root.dataset.season=id;root.style.setProperty('--s1',look.tint[0]);root.style.setProperty('--s2',look.tint[1]);
+    id=LOOK[ask]?ask:on?on[0]:season(T);
+  const look=LOOK[id];root.dataset.season=id;if(look.tint){root.style.setProperty('--s1',look.tint[0]);root.style.setProperty('--s2',look.tint[1])}
   return{id,...look}})();
 /* the time of year's pictures (assets/js/themes.js); if that file is missing, the site simply goes without */
 const TH=window.THEMES||{mount(){},back(){},island(){},menu(){},page(){},tier(){},reveal(){}};
@@ -2123,7 +2165,9 @@ function finish(o,n,P){
 /* in-page buttons skip the menu: a short cue on the island's prism, then the dive zooms straight out of it */
 function prismGeo(at){const l=closedLay(),s=at?.7:l.prism.s,cx=at?at[0]:innerWidth/2+l.prism.x,cy=at?at[1]:GEO.top+l.prism.y;
   return{V:[[0,-40],[34.641,20],[-34.641,20]].map(([x,y])=>[cx+x*s,cy+y*s]),P:[cx,cy],rho:40*s}}
-async function jump(id,at){const i=PAGES.findIndex(p=>p.id===id),P=PAGES[i];if(busy||menuOpen||!P||P.id===current)return;
+/* pages reached only by a link (not in the menu's spectrum) */
+const EXTRA=[{id:'privacy',name:'Privacy',col:'#A98BFF'}];
+async function jump(id,at){const i=PAGES.findIndex(p=>p.id===id),P=PAGES[i]||EXTRA.find(p=>p.id===id);if(busy||menuOpen||!P||P.id===current)return;
   busy=true;SEL=i;const pz=prismGeo(at);                     // measured before the label (and island width) changes
   LBL=P.name;root.style.setProperty('--accent',P.col);ACCENT=P.col;
   const o=pageEl(current),n=pageEl(P.id);n.classList.add('pre');
@@ -2370,7 +2414,7 @@ const DROP=(()=>{const back=$('#back'),drop=$('#drop'),rims=[...drop.querySelect
 /* ---------- the menu hint ----------
    New visitors may not know the island is the menu. After 40 s on the site (counted only while the tab is visible and the
    menu closed) a light starts circling the island and keeps going; every 7 s the line "Tap the island for the menu" shows
-   for 2.5 s. The first time the menu opens it all stops for good (for this tab now; across visits once PREFS has consent). */
+   for 2.5 s. The first time the menu opens it all stops for good (until the page is reloaded; nothing is stored). */
 const HINT=(()=>{const KEY='menu-found',FIRST=40000,SAY_EVERY=7000,SAY_FOR=2500;
   let done=PREFS.get(KEY)==='1',acc=0,last=performance.now(),playing=false,sayI=0,sayT=0;
   const el=document.createElement('div');el.id='ihint';el.setAttribute('aria-hidden','true');
@@ -2938,7 +2982,7 @@ const AMBIENT=(()=>{const boxes=[...document.querySelectorAll('.abg')],rgb=h=>[1
   function build(box){if(box.dataset.built)return;box.dataset.built='1';
     const pc=getComputedStyle(box.closest('.page')).getPropertyValue('--pc').trim()||'#FFFFFF',i=PAGES.findIndex(p=>p.col.toLowerCase()===pc.toLowerCase()),
       nb=(PAGES[i+1]||PAGES[0]).col,kind=box.dataset.abg,c=rgb(pc).join(','),n=rgb(nb).join(',');
-    box.append(pool(c,.24,'ab-p p1'),pool(n,.2,'ab-p p2'),pool(rgb(SEASON.tint[0]).join(','),.2,'ab-p p3'));
+    box.append(pool(c,.24,'ab-p p1'),pool(n,.2,'ab-p p2'),pool(SEASON.tint?rgb(SEASON.tint[0]).join(','):c,.2,'ab-p p3'));
     if(kind==='spectrum')box.append(band());
     else if(kind==='rays'&&window.CanvasRenderingContext2D&&CanvasRenderingContext2D.prototype.createConicGradient)box.append(rays(c));
     else if(kind==='waves')box.append(wave(pc,nb,1.3,'ab-wave w1'),wave(nb,pc,4.2,'ab-wave w2'));
@@ -2998,6 +3042,9 @@ const INTRO=(()=>{const cur=$('#intro');let A=[],done=!cur;
     A.forEach(a=>{if(a.effect&&a.effect.target===island)a.cancel()});A=[];TH.reveal(250);PACE.check()}
   return{run,get on(){return !done}}})();
 
+/* "privacy notice" links in running text (the Password Helper page): open the Privacy page */
+document.addEventListener('click',e=>{const a=e.target.closest('a.pv-link');if(!a)return;e.preventDefault();
+  if(current==='pass'){PASS.leave();setTimeout(()=>jump('privacy'),1400)}else jump('privacy')});
 /* ---------- boot ---------- */
 /* glass that bends what is behind it: project cards and the details sheet, and on the full tier the story cards over the 3D model */
 document.querySelectorAll('.pj.lq').forEach(el=>LQ.watch(el,{tier:1,sc:46,blur:3}));
