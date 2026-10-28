@@ -20,6 +20,10 @@ tools/build/
 *.f3d
 *.f3z
 
+# Cloudflare Worker (workers/cv-counter): installed packages and wrangler's local state
+node_modules/
+.wrangler/
+
 # Editors and operating systems
 .vscode/
 .idea/

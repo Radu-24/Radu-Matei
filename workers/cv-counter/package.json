@@ -1,0 +1,15 @@
+{
+  "name": "radumatei-cv-counter",
+  "private": true,
+  "description": "Counts CV downloads for radumatei.ro without storing anything about visitors",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.150.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

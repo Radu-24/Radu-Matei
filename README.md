@@ -6,11 +6,11 @@ My personal website: who I am, what I have built, my thesis robot, the DataLink 
 
 ## What it is
 
-- One page with seven sections: Home, Projects, DataLink Rover, Password Helper, Record, About and Contact. The menu is a glass prism at the top of the screen. The two project pages open from their entries on Projects.
+- One page with eight sections: Home, Projects, DataLink Rover, Password Helper, Record, About, Contact and CV. The menu is a glass prism at the top of the screen. The two project pages open from their entries on Projects.
 - Plain HTML, CSS and JavaScript. There is no framework and no build step for the site itself.
 - The light in the background is drawn by `light.js` in a Web Worker, so it stays smooth while the page is busy. Browsers without workers or OffscreenCanvas draw it on the main thread instead.
 - The rover and its controller are real 3D models (three.js). The rover is built part by part to real dimensions, and the controller comes from its CAD file. The page loads light versions first. On devices that can handle more, it swaps in detailed versions, and it switches back if the frame rate drops.
-- Every page has a moving background of soft light (`.abg` in `index.html`), except a project's own page, which has a background made for it. Pools in the page's colour drift behind the content, plus one motion per page. Home has a band of spectrum, Projects has a beam of light scanning a dot grid, Record has rays, About has aurora ribbons and Contact has signal rings. The shapes are small canvases that the graphics card stretches and moves, so the page does no work while they animate. Weaker devices keep the still background.
+- Every page has a moving background of soft light (`.abg` in `index.html`), except a project's own page, which has a background made for it. Pools in the page's colour drift behind the content, plus one motion per page. Home has a band of spectrum, Projects has a beam of light scanning a dot grid, Record has rays, About has aurora ribbons, Contact has signal rings and the CV has a fan of pages leafing open. The shapes are small canvases that the graphics card stretches and moves, so the page does no work while they animate. Weaker devices keep the still background.
 - The first time the page loads, the name fades in on black and glides into place, then the page comes in piece by piece. It plays on every page load and stores nothing.
 - The look follows the time of year (see below).
 
@@ -26,6 +26,15 @@ My personal website: who I am, what I have built, my thesis robot, the DataLink 
 - Then the security model, a few numbers and the app's story, and a glass dock at the bottom that follows the part in view.
 
 Nothing is stored. Everything typed on the page is emptied when the visitor leaves it, including the patterns and results shown for it, and a lock or unlock still running is dropped. The background is the app's matrix rain, redrawn as falling hashes in the page's colour: a few strips drawn once and moved by the graphics card.
+
+## The CV page
+
+The CV, to read on the site, with the PDF a click away. It is one column, as on paper, on its own violet light (the CV's colour in the menu).
+
+- **Click an entry** (or focus it and press Enter): a copy of it glides out of the page to the middle of the screen, the page blurs behind it, and an explanation fades in under it, with what each part means. A click outside, Esc or Close glides it back into its place; Previous and Next (or the arrow keys) move to the neighbouring entry without closing. Only transform and opacity move, and the original keeps its place, so nothing reflows. The explanations are in `CV` in `index.html`.
+- **Download PDF** saves `site/assets/doc/Radu-Matei-CV.pdf`. The button shows it on its own: the arrow drops into a ring, the ring fills, a tick.
+- **How many times it was downloaded** shows under the button, counted by a small Cloudflare Worker (`workers/cv-counter/`, setup in its README) that keeps one number and nothing about anyone. Until it is deployed, or whenever it can't be reached, the line stays hidden and the button downloads the site's own copy.
+- The blur behind an open entry is a still backdrop blur that only fades in and out, as under the menu; touch devices and the lighter tiers get a dark tint instead.
 
 ## The time of year
 
@@ -52,7 +61,7 @@ The ambient light also takes on the theme's colour and particles. A project's ow
 
 The pictures are drawn once and only moved by the graphics card, the same way as the ambient light, and they hold still on the lighter quality tiers and with reduced motion. To preview a theme, add `?season=` to the address with one of `halloween`, `xmas`, `newyear`, `birthday`, `easter`, `martisor`, `spring`, `summer`, `autumn`, `winter` or `none`. The dates and colours are in `SEASON` in `index.html`, and the pictures are in `assets/js/themes.js`.
 
-To give a new page the moving background, add `<div class="abg" data-abg="pools" aria-hidden="true"></div>` right after its `.pbg`. Use `pools` for the pools alone, or `spectrum`, `scan`, `rays`, `waves` or `rings` for one of the motions. The colours come from the page's `--pc`.
+To give a new page the moving background, add `<div class="abg" data-abg="pools" aria-hidden="true"></div>` right after its `.pbg`. Use `pools` for the pools alone, or `spectrum`, `scan`, `rays`, `waves`, `rings` or `pages` for one of the motions. The colours come from the page's `--pc`.
 
 ![The DataLink Rover in 3D](docs/rover.jpg)
 
@@ -72,7 +81,9 @@ site/                    the website; this folder is what gets published
     ├── vendor/three/    three.js 0.160.0, served from the site
     ├── css/fonts.css    the two fonts, embedded, served from the site
     ├── fonts/           font licences
+    ├── doc/             the CV as a PDF (Download PDF on the CV page)
     └── img/             photos and the tab icons (favicon.svg, favicon-32.png, apple-touch-icon.png)
+workers/cv-counter/      the CV download counter, a Cloudflare Worker (see its README)
 tools/                   Python build for the 3D models (see tools/README.md)
 docs/                    screenshots for this README
 .github/workflows/       publishes site/ to GitHub Pages
@@ -124,7 +135,7 @@ The site contains no passwords, keys or private addresses.
 ## Privacy
 
 The site sets no cookies, stores nothing on the visitor's device (the menu hint is remembered in memory only, until a reload) and has no analytics or tracking (the browser may still cache the site files as usual). The home page terminal keeps typed commands on screen until a reload. The full privacy notice (controller, hosting, the optional leak check, legal bases, transfers, rights, ANSPDCP) has its own page, opened from the home page footer (it is not in the menu; such pages are listed in `EXTRA` in `index.html`). Fonts and three.js are part of the site, so a visitor's browser
-contacts only the host. The one exception is the leak check on the Password Helper page. When a visitor presses its button, the first 5
+contacts only the host, with two exceptions. The CV page asks `api.radumatei.ro` (the CV counter, on Cloudflare) for the download total and downloads the CV through it; it keeps one number and nothing about the visitor (see `workers/cv-counter/README.md`). The other is the leak check on the Password Helper page. When a visitor presses its button, the first 5
 characters of the password's SHA-1 hash go to Have I Been Pwned (`api.pwnedpasswords.com`, served through Cloudflare), which sees that
 request like any website would. The password itself never leaves the page. GitHub Pages keeps its own server logs, including IP
 addresses. The Privacy page says the same.

@@ -123,6 +123,17 @@ button{font:inherit;color:inherit}
 @media (max-width:760px){[data-abg=rings]{--cx:70vw;--cy:82vh}}
 [data-abg=rings] .p1{--x0:80vw;--y0:72vh;--x1:66vw;--y1:60vh}
 [data-abg=rings] .p2{--x0:12vw;--y0:16vh;--x1:26vw;--y1:28vh}
+/* CV: a fan of soft pages, pinned at their foot below the bottom right, leafing open and shut */
+.ab-sheet{width:40vmax;height:54vmax;transform-origin:50% 100%;animation:abSheet var(--t) ease-in-out var(--dl) infinite alternate,abBreath var(--tb) ease-in-out infinite alternate}
+@keyframes abSheet{from{transform:translate3d(calc(var(--px) - 20vmax),calc(var(--py) - 54vmax),0) rotate(var(--a0))}to{transform:translate3d(calc(var(--px) - 20vmax),calc(var(--py) - 54vmax),0) rotate(var(--a1))}}
+[data-abg=pages]{--px:74vw;--py:112vh}
+@media (max-width:760px){[data-abg=pages]{--px:70vw;--py:108vh}}
+.ab-sheet.s1{--a0:-34deg;--a1:-20deg;--t:23s;--dl:0s;--tb:9s;--b0:.16;--b1:.3}
+.ab-sheet.s2{--a0:-14deg;--a1:-2deg;--t:29s;--dl:-8s;--tb:11s;--b0:.2;--b1:.36}
+.ab-sheet.s3{--a0:4deg;--a1:18deg;--t:35s;--dl:-15s;--tb:13s;--b0:.14;--b1:.28}
+.ab-sheet.s4{--a0:-50deg;--a1:-38deg;--t:41s;--dl:-6s;--tb:15s;--b0:.08;--b1:.18}
+[data-abg=pages] .p1{--x0:10vw;--y0:12vh;--x1:24vw;--y1:26vh}
+[data-abg=pages] .p2{--x0:86vw;--y0:84vh;--x1:70vw;--y1:68vh}
 /* Projects: the workbench, a faint dot grid (painted once, it never moves), and now and then a soft beam of light sweeping
    across it like a scanner; it rests off screen for a while between passes */
 .abg>.ab-grid{inset:0;width:100%;height:100%;opacity:.12;background:radial-gradient(color-mix(in srgb,var(--pc) 45%,#fff) 1px,transparent 1.6px) 0 0/26px 26px;
@@ -1137,6 +1148,86 @@ button.pj{cursor:pointer}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}#stage,#island{transition-duration:.01s!important}}
 
+/* ---------- CV: the CV to read, on its own light ----------
+   One column, as on paper. Each entry is one piece: click it (or Enter) and a copy glides out of the page to the middle of
+   the screen, the page blurs behind it and the explanation fades in under it; a click anywhere, Esc or Close glides it back.
+   Only transform and opacity move, and the original keeps its place (hidden), so nothing reflows. The blur behind is a
+   static backdrop blur that only fades, as under the menu: lighter on the balanced tier, none on touch and the lite tiers.
+   A piece's look hangs on its own classes (never on the page), so its copy looks the same outside the page. */
+.p-cv{--pc:#9B7BFF}
+.p-cv h1.ttl{text-align:center}.p-cv .lead{margin-left:auto;margin-right:auto;text-align:center}
+.cv{max-width:800px;margin:7vh auto 0}
+.cv-hd{display:flex;flex-direction:column;align-items:center;text-align:center;gap:20px;padding-bottom:30px}.cv-hd .cv-role{margin-left:auto;margin-right:auto}.cv-hd .cv-ct{justify-content:center}
+.cv-nm{margin:0;font-size:clamp(32px,3.8vw,46px);font-weight:700;letter-spacing:-.04em;line-height:1}
+.cv-role{margin:10px 0 0;color:#AEB4C4;font-size:16px;max-width:48ch}
+.cv-ct{margin:14px 0 0;display:flex;flex-wrap:wrap;gap:4px 18px;font:400 13px var(--mono);color:var(--muted)}
+.cv-ct a{color:var(--fg);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.25);transition:border-color .25s}
+.cv-ct a:hover,.cv-ct a:focus-visible{border-color:var(--pc)}
+.cv-get{display:flex;flex-direction:column;align-items:center;gap:12px}
+.cv-n{margin:0;display:inline-flex;align-items:center;gap:8px;font:400 12.5px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums;
+  opacity:0;translate:0 6px;transition:opacity .5s,translate .7s var(--spring)}
+.cv-n.on{opacity:1;translate:0 0}
+.cv-n i{width:6px;height:6px;border-radius:50%;background:var(--pc);box-shadow:0 0 8px var(--pc)}
+.cv-n b{font-weight:500;color:var(--fg)}
+.cv-n.bump i{animation:cvBump .7s var(--spring)}
+@keyframes cvBump{0%{scale:1}35%{scale:2.2}100%{scale:1}}
+.cv-dl{display:inline-flex;align-items:center;gap:10px;padding:8px 20px 8px 8px;text-decoration:none}
+.cv-dl .ic{position:relative;flex:none;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.14);overflow:hidden}
+.cv-dl .ic svg{position:absolute;inset:0;width:100%;height:100%}
+.cv-dl .ar{transition:transform .45s var(--spring),opacity .3s}
+.cv-dl .rg{stroke-dasharray:76;stroke-dashoffset:76}.cv-dl .tk{stroke-dasharray:16;stroke-dashoffset:16}
+.cv-dl .cv-lb{display:grid}.cv-dl .cv-lb b{grid-area:1/1;font-weight:600;transition:opacity .3s,transform .45s var(--spring)}
+.cv-dl .cv-lb b+b{opacity:0;transform:translateY(8px)}
+.cv-dl[data-st=go] .ar{animation:cvDrop .65s cubic-bezier(.22,1,.36,1) infinite}
+.cv-dl[data-st=go] .rg{transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);stroke-dashoffset:0}
+.cv-dl[data-st=done] .rg{stroke-dashoffset:0}.cv-dl[data-st=done] .ar{opacity:0;transform:translateY(14px)}
+.cv-dl[data-st=done] .tk{transition:stroke-dashoffset .4s .1s cubic-bezier(.22,1,.36,1);stroke-dashoffset:0}
+.cv-dl[data-st] .lb b:first-child{opacity:0;transform:translateY(-8px)}
+.cv-dl[data-st=go] .lb b:nth-child(2),.cv-dl[data-st=done] .lb b:nth-child(3){opacity:1;transform:none}
+@keyframes cvDrop{0%{transform:translateY(-12px);opacity:0}30%{opacity:1}70%{transform:translateY(2px);opacity:1}100%{transform:translateY(12px);opacity:0}}
+.cv-sec{padding:22px 0 18px;border-top:1px solid rgba(255,255,255,.08)}
+.cv-sec h2{margin:0 0 10px;font:500 11.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pc)}
+.cv-s{display:block;position:relative;margin:0 -14px;padding:10px 14px;border-radius:16px;cursor:pointer;color:var(--fg);transition:background .3s,box-shadow .3s}
+.cv-s+.cv-s{margin-top:6px}
+.cv-s:hover{background:rgba(255,255,255,.045);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+.cv-s:focus-visible{outline-offset:0}
+.cv-s.gone{visibility:hidden}
+.cv-rw{display:flex;justify-content:space-between;align-items:baseline;gap:2px 16px;flex-wrap:wrap}
+.cv-s h3{margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em;line-height:1.35}
+.cv-s h3 small{font:400 12.5px var(--mono);color:var(--muted);margin-left:8px;letter-spacing:0}
+.cv-d{font:400 12.5px var(--mono);color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cv-o{margin:2px 0 0;color:var(--muted);font-size:14.5px;line-height:1.5}
+.cv-s ul{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:4px}
+.cv-s li{position:relative;padding-left:18px;color:#D3D6E2;font-size:15px;line-height:1.5}
+.cv-s li::before{content:"";position:absolute;left:3px;top:.62em;width:5px;height:5px;border-radius:50%;background:var(--muted);transition:background .3s,box-shadow .3s}
+.cv-s:hover li::before,.cv-fl li::before{background:var(--pc);box-shadow:0 0 8px var(--pc)}
+.cv-k{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;font-size:15px;line-height:1.5}
+.cv-k b{font-weight:400;color:var(--muted)}.cv-k span{color:#D3D6E2}
+@media (max-width:560px){.cv-k{grid-template-columns:1fr;gap:0}.cv-s{margin:0 -10px;padding:10px}}
+/* the focus layer: over the pages, under the menu */
+#cvf{position:fixed;inset:0;z-index:30;--pc:#9B7BFF;visibility:hidden}
+#cvf.on{visibility:visible}
+#cvf .cvf-bg{position:absolute;inset:0;opacity:0;background:rgba(4,5,10,.5);-webkit-backdrop-filter:blur(9px) saturate(1.25);backdrop-filter:blur(9px) saturate(1.25)}
+.t0 #cvf .cvf-bg{-webkit-backdrop-filter:blur(16px) saturate(1.3);backdrop-filter:blur(16px) saturate(1.3)}
+.t2 #cvf .cvf-bg,.touch #cvf .cvf-bg{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(4,5,10,.94)}
+#cvf .cvf-sc{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
+#cvf .cvf-in{position:relative;min-height:100%}
+.cv-fl{position:absolute!important;left:0;top:0;margin:0!important;transform-origin:0 0;pointer-events:none;will-change:transform;background:none!important;box-shadow:none!important}
+.cv-fx{position:absolute;left:0;top:0;opacity:0;will-change:transform,opacity}
+.cv-fx .lab{display:flex;align-items:center;gap:12px;margin-bottom:12px;font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--pc)}
+.cv-fx .lab::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,color-mix(in srgb,var(--pc) 60%,transparent),transparent)}
+.cv-fx p{margin:0 0 10px;font-size:16px;line-height:1.6;color:#D3D6E2;max-width:62ch}
+.cv-fx dl{margin:14px 0 0;display:grid;gap:12px}
+.cv-fx dt{font-size:15px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:9px}
+.cv-fx dt::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--pc);box-shadow:0 0 8px var(--pc)}
+.cv-fx dd{margin:3px 0 0 15px;font-size:15px;line-height:1.55;color:#C2C7D4;max-width:62ch}
+.cv-fx nav{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.cv-fx nav button{border:0;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;font:500 12.5px var(--mono);color:#AEB4C4;
+  background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13);transition:color .25s,box-shadow .25s,scale .45s var(--spring)}
+.cv-fx nav button:hover{color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}.cv-fx nav button:active{scale:.94}
+.cv-fx nav .go{font-family:var(--sans);font-weight:600;color:#07080D;background:var(--pc);box-shadow:none}.cv-fx nav .go:hover{color:#07080D;box-shadow:0 0 18px color-mix(in srgb,var(--pc) 50%,transparent)}
+@media (prefers-reduced-motion:reduce){.cv-dl *{transition:none!important;animation:none!important}}
+
 /* ---------- Contact: one screen, a card drawn by light ----------
    The page never scrolls: the wheel and a sideways drag flip the card instead. After the page transition the island traces
    its own outline (both halves start at the top and meet underneath), shoots a beam down, and the beam traces the card the
@@ -1363,7 +1454,7 @@ button.pj{cursor:pointer}
     <footer class="foot">
       <div class="ft-top">
         <div class="ft-id"><p class="ft-name">Radu <span>Matei</span></p><p class="ft-tag">Telecom engineer · Brașov, România</p></div>
-        <nav class="ft-col" aria-label="Pages"><h2>Pages</h2><button data-go="projects">Projects</button><button data-go="record">Record</button><button data-go="about">About</button><button data-go="contact">Contact</button><button data-go="privacy">Privacy</button></nav>
+        <nav class="ft-col" aria-label="Pages"><h2>Pages</h2><button data-go="projects">Projects</button><button data-go="record">Record</button><button data-go="about">About</button><button data-go="contact">Contact</button><button data-go="cv">CV</button><button data-go="privacy">Privacy</button></nav>
         <nav class="ft-col" aria-label="Projects"><h2>Projects</h2><button data-go="projects">DataLink Rover</button><button data-go="projects">Password Helper</button><a href="https://github.com/Radu-24/Password-Helper" target="_blank" rel="noopener">Password Helper on GitHub <i aria-hidden="true">↗</i></a></nav>
         <nav class="ft-col" aria-label="Contact"><h2>Contact</h2><a href="mailto:ramatei@gmail.com">ramatei@gmail.com</a><a href="https://www.linkedin.com/in/radu-matei-1251172b3/" target="_blank" rel="noopener">LinkedIn <i aria-hidden="true">↗</i></a><a href="https://github.com/Radu-24" target="_blank" rel="noopener">GitHub <i aria-hidden="true">↗</i></a></nav>
       </div>
@@ -1791,17 +1882,60 @@ last = t</pre></div>
     </div></div></div></div>
     <p class="ct-hint r"><span class="ms">Scroll, or drag the card, to flip it</span><span class="tp">Drag the card sideways to flip it</span></p>
   </div></div></section>
+  <section class="page p-cv" id="pg-cv" aria-label="CV"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="pages" aria-hidden="true"></div><div class="wash"></div><div class="pc">
+    <h1 class="ttl r"><span class="tt">CV</span><span class="tb" aria-hidden="true">CV</span></h1><p class="lead r">Where I studied, where I worked and what I can do. Click any entry to read more about it.</p>
+    <div class="cv">
+      <header class="cv-hd r">
+        <div><h2 class="cv-nm">Radu Matei</h2><p class="cv-role">Telecommunications engineer, M.Sc. student in electronic and communication systems</p>
+          <p class="cv-ct"><span>Brașov, Romania</span><a href="mailto:ramatei@gmail.com">ramatei@gmail.com</a><a href="https://www.linkedin.com/in/radu-matei-1251172b3/" target="_blank" rel="noopener">LinkedIn</a><a href="https://github.com/Radu-24" target="_blank" rel="noopener">github.com/Radu-24</a></p></div>
+        <div class="cv-get"><a class="btn p cv-dl" href="assets/doc/Radu-Matei-CV.pdf" download="Radu Matei - CV.pdf" type="application/pdf" referrerpolicy="no-referrer"><span class="ic" aria-hidden="true"><svg viewBox="0 0 30 30"><circle class="rg" cx="15" cy="15" r="12" fill="none" stroke="currentColor" stroke-width="2" transform="rotate(-90 15 15)"/><path class="tk" d="M10 15.5l3.2 3.2L20 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><svg class="ar" viewBox="0 0 30 30"><path d="M15 9v11m-4.5-4.5L15 20l4.5-4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="cv-lb"><b>Download PDF</b><b aria-hidden="true">Downloading…</b><b aria-hidden="true">Downloaded</b></span></a><p class="cv-n" aria-live="polite"><i aria-hidden="true"></i><span></span></p></div>
+      </header>
+      <section class="cv-sec r" aria-label="Education"><h2>Education</h2>
+        <div class="cv-s" data-k="msc" tabindex="0" role="button" aria-haspopup="dialog"><div class="cv-rw"><h3>M.Sc., Integrated Electronic and Communication Systems (SECI)</h3><span class="cv-d">10.2026 – 07.2028 (expected)</span></div><p class="cv-o">Transilvania University of Brașov, Faculty of Electrical Engineering and Computer Science</p></div>
+        <div class="cv-s" data-k="beng" tabindex="0" role="button" aria-haspopup="dialog"><div class="cv-rw"><h3>B.Eng., Telecommunication Systems and Technologies</h3><span class="cv-d">10.2022 – 2026</span></div><p class="cv-o">Transilvania University of Brașov, Faculty of Electrical Engineering and Computer Science</p>
+          <ul><li>Thesis: DataLink Rover, graded 9.00/10 (details under Projects).</li><li>Relevant courses: telecommunication systems, signal processing, microcontrollers, computer networks. Tools used: MATLAB, OrCAD, AutoCAD.</li></ul></div>
+      </section>
+      <section class="cv-sec r" aria-label="Experience"><h2>Experience</h2>
+        <div class="cv-s" data-k="siemens" tabindex="0" role="button" aria-haspopup="dialog"><div class="cv-rw"><h3>Siemens Energy, Petrobrazi Refinery</h3><span class="cv-d">07.2025 – 08.2025</span></div><p class="cv-o">Intern, PRAM Department · Brazi, Romania</p>
+          <ul><li>Helped troubleshoot and test protection relays on the refinery’s power distribution network.</li><li>PLC and HMI programming tasks.</li><li>Supported a SCADA server restart and the relay tests that followed it.</li><li>Took part in testing 6 kV and 0.4 kV switchgear cells.</li></ul></div>
+      </section>
+      <section class="cv-sec r" aria-label="Projects"><h2>Projects</h2>
+        <div class="cv-s" data-k="dlr" tabindex="0" role="button" aria-haspopup="dialog"><div class="cv-rw"><h3>DataLink Rover<small>Python</small></h3><span class="cv-d">Bachelor’s thesis, 2026</span></div>
+          <ul><li>Tracked robot I designed and built alone, from the electronics to the control software.</li><li>Remote-controlled, streaming FPV video and live telemetry to the operator.</li></ul></div>
+        <div class="cv-s" data-k="ph" tabindex="0" role="button" aria-haspopup="dialog"><div class="cv-rw"><h3>Password Helper<small>Electron, Node.js, MongoDB, Docker</small></h3></div>
+          <ul><li>Desktop app that rates password strength with zxcvbn and checks HaveIBeenPwned for known breaches; the vault backend uses JWT authentication.</li></ul></div>
+      </section>
+      <section class="cv-sec r" aria-label="Skills"><h2>Skills</h2>
+        <div class="cv-s cv-k" data-k="net" tabindex="0" role="button" aria-haspopup="dialog"><b>Networking</b><span>TCP/IP, VLANs, routing and switching, VPN; MikroTik RouterOS, Cisco IOS</span></div>
+        <div class="cv-s cv-k" data-k="sec" tabindex="0" role="button" aria-haspopup="dialog"><b>Security</b><span>Penetration testing, vulnerability analysis, security auditing</span></div>
+        <div class="cv-s cv-k" data-k="ind" tabindex="0" role="button" aria-haspopup="dialog"><b>Industrial</b><span>Protection relays, PLC/HMI, SCADA, MV/LV switchgear testing</span></div>
+        <div class="cv-s cv-k" data-k="prog" tabindex="0" role="button" aria-haspopup="dialog"><b>Programming</b><span>Python, C/C++, Java, JavaScript (Node.js, Electron), HTML/CSS</span></div>
+        <div class="cv-s cv-k" data-k="tools" tabindex="0" role="button" aria-haspopup="dialog"><b>Tools</b><span>Linux terminal, Windows, VMware, Docker, Git, MATLAB, OrCAD, AutoCAD, Arduino, Raspberry Pi</span></div>
+        <div class="cv-s cv-k" data-k="lang" tabindex="0" role="button" aria-haspopup="dialog"><b>Languages</b><span>Romanian (native), English (B2–C1)</span></div>
+      </section>
+      <section class="cv-sec r" aria-label="Volunteering"><h2>Volunteering</h2>
+        <div class="cv-s" data-k="ausf" tabindex="0" role="button" aria-haspopup="dialog"><div class="cv-rw"><h3>Youth Hub AUSF</h3><span class="cv-d">10.2021 – 11.2021</span></div><p class="cv-o">Volunteer: supported activities at a children’s home, mentoring the kids, and took part in AUSF workshops · Ploiești</p></div>
+        <div class="cv-s" data-k="ride" tabindex="0" role="button" aria-haspopup="dialog"><div class="cv-rw"><h3>Asociația Diabeticilor din Prahova</h3><span class="cv-d">10.2019</span></div><p class="cv-o">Volunteer at The Fun Ride, a community bike event for diabetes awareness · Ploiești</p></div>
+      </section>
+      <section class="cv-sec r" aria-label="Other"><h2>Other</h2>
+        <div class="cv-s cv-k" data-k="courses" tabindex="0" role="button" aria-haspopup="dialog"><b>Courses</b><span>Cybersecurity course, GoIT Romania (09.2024 – 2025)<br>Cisco CCNA 1, Telecom Academy (in progress)</span></div>
+        <div class="cv-s cv-k" data-k="tennis" tabindex="0" role="button" aria-haspopup="dialog"><b>Interests</b><span>Tennis</span></div>
+      </section>
+    </div>
+  </div></div></section>
   <section class="page p-privacy" id="pg-privacy" aria-label="Privacy notice"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="pools" aria-hidden="true"></div><div class="wash"></div><div class="pc">
     <h1 class="ttl r"><span class="tt">Privacy</span><span class="tb" aria-hidden="true">Privacy</span></h1><p class="lead r">What happens to your data on this site. Short version: no cookies, no tracking, nothing stored on your device.</p>
     <article class="pv-doc lq r">
         <h2>Who is responsible</h2>
         <p>Radu Matei, Brașov, Romania, is the controller for this website. Contact for anything about your data: <a href="mailto:ramatei@gmail.com">ramatei@gmail.com</a>.</p>
         <h2>What this site does not do</h2>
-        <p>It sets no cookies, writes nothing to your browser's storage (no localStorage, sessionStorage, IndexedDB or similar), and uses no analytics, tracking, advertising or social-media plugins. Your browser may keep its usual cache of the site's files (pages, fonts, images); that is your browser's normal behaviour, holds nothing about you, and you can clear it at any time. Fonts and code load from this site itself. What you type stays in your browser's memory while the page is open and is never sent to me. On the Password Helper page, everything typed there (the checker, generator and vault demo) is cleared when you leave that page. The terminal on the home page keeps the commands you typed on screen until you reload or close the tab.</p>
+        <p>It sets no cookies, writes nothing to your browser's storage (no localStorage, sessionStorage, IndexedDB or similar), and uses no analytics, tracking, advertising or social-media plugins. The one number it keeps is how many times my CV has been downloaded, a total that says nothing about who (see below). Your browser may keep its usual cache of the site's files (pages, fonts, images); that is your browser's normal behaviour, holds nothing about you, and you can clear it at any time. Fonts and code load from this site itself; the only other addresses it contacts are the two described below (the CV download counter and, on request, the leak check). What you type stays in your browser's memory while the page is open and is never sent to me. On the Password Helper page, everything typed there (the checker, generator and vault demo) is cleared when you leave that page. The terminal on the home page keeps the commands you typed on screen until you reload or close the tab.</p>
         <h2>Hosting: GitHub Pages</h2>
         <p>The site is hosted by GitHub, Inc. (USA). To deliver the pages and protect the service, GitHub records your IP address and technical request data (such as browser type and time) in server logs. Legal basis: legitimate interest in running a secure website (GDPR Art. 6(1)(f)). This is necessary to deliver and protect a public website, uses only the data any web server receives, and is what visitors expect when they open a website, so it does not override your interests. GitHub keeps these logs for as long as it says it needs them to run and secure its service and meet legal obligations, as described in its privacy statement; it does not publish a fixed period for Pages logs. I cannot see, change or shorten them. Data may be processed in the USA; GitHub covers such transfers with its own safeguards (such as the EU-US Data Privacy Framework and Standard Contractual Clauses). See the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">GitHub Privacy Statement</a>.</p>
         <h2>Optional leak check: Have I Been Pwned</h2>
         <p>Only if you press “Check this password” on the Password Helper page, your browser sends the first 5 characters of the password’s SHA-1 hash to Have I Been Pwned (api.pwnedpasswords.com, run by Troy Hunt and served through Cloudflare). The password itself and its full hash never leave your browser; the request carries no cookies and no referrer. Like any website you visit, Have I Been Pwned and Cloudflare receive your IP address and normal browser headers and may keep them in operational logs. Legal basis: my legitimate interest in providing the check you asked for (GDPR Art. 6(1)(f)); it runs only on your request and sends the least data the check needs (a 5-character prefix shared by hundreds of other passwords), so it does not override your interests. Have I Been Pwned is run from Australia, which has no EU adequacy decision, and served through Cloudflare (USA), which covers transfers under the EU-US Data Privacy Framework and Standard Contractual Clauses. Because this transfer happens only when you choose to press the button after reading this, it rests on your explicit consent (GDPR Art. 49(1)(a)); the risk is that your IP address is handled outside the EU without the same legal protection. They keep their logs for the periods described in their policies: see the <a href="https://haveibeenpwned.com/Privacy" target="_blank" rel="noopener">Have I Been Pwned privacy policy</a> and the <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare privacy policy</a>. If you do not press the button, nothing is sent.</p>
+        <h2>Counting CV downloads</h2>
+        <p>The CV page shows how many times my CV has been downloaded. To count, the Download PDF button gets the file through a small program of mine on Cloudflare (api.radumatei.ro, run on the infrastructure of Cloudflare, Inc., USA), and the CV page asks the same address for the current total when you open it. The program adds one to a single number when the file is downloaded and keeps nothing else: no IP address, no browser details, no cookies, and nothing is written to your device, so the total cannot be linked to you or to anyone. Its own logging is switched off, and the requests carry no cookies and no referrer. Like any web server, Cloudflare receives your IP address and normal browser headers in order to deliver the request and protect its network, and may keep them for a short time in its own operational logs. Legal basis: my legitimate interest in knowing roughly how often my CV is downloaded (GDPR Art. 6(1)(f)); it uses only what any web server receives and keeps nothing about you, so it does not override your interests. Cloudflare acts as my processor and covers transfers to the USA under the EU-US Data Privacy Framework and Standard Contractual Clauses. See the <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare privacy policy</a>. If you would rather not contact Cloudflare, the CV is also available as <a href="assets/doc/Radu-Matei-CV.pdf" download="Radu Matei - CV.pdf">this site's own copy</a>, which is not counted.</p>
         <h2>External links</h2>
         <p>Links to GitHub and other sites open those sites, which have their own privacy policies. Nothing is sent to them until you click.</p>
         <h2>Writing to me</h2>
@@ -1836,6 +1970,7 @@ last = t</pre></div>
 <canvas id="light" aria-hidden="true"></canvas>
 <div id="orbs" role="menu" aria-label="Pages"></div>
 <div id="sheet" hidden><div class="sh-bg"></div><div class="sh lq bd" role="dialog" aria-modal="true" aria-label="Details"><button class="sh-x" aria-label="Close">×</button><div class="sh-c"></div></div></div>
+<div id="cvf" role="dialog" aria-modal="true" aria-label="About this entry"><div class="cvf-bg"></div><div class="cvf-sc"><div class="cvf-in"><div class="cv-fx" aria-live="polite"></div></div></div></div>
 <div class="toast" id="toast" role="status"></div>
 
 
@@ -2004,7 +2139,7 @@ const PAGES=[
   {id:'record',name:'Record',col:'#FFE14D',lam:572,ic:'<circle cx="12" cy="9" r="5"/><path d="M8.5 13l-1.5 8 5-3 5 3-1.5-8"/>'},
   {id:'about',name:'About',col:'#5CF59A',lam:532,ic:'<circle cx="12" cy="12" r="8.5"/><path d="M5 6.5c3.5 3 3.5 8 0 11M19 6.5c-3.5 3-3.5 8 0 11"/>'},
   {id:'contact',name:'Contact',col:'#4DC8FF',lam:482,ic:'<path d="M12 20v-6"/><circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 000 8.4M16.2 7.8a6 6 0 010 8.4M5 5a10 10 0 000 14M19 5a10 10 0 010 14"/>'},
-  {id:'cv',name:'CV',col:'#9B7BFF',lam:445,ic:'<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>'}];
+  {id:'cv',name:'CV',col:'#9B7BFF',lam:445,ic:'<path d="M7 3.5h6.5L18 8v12.5H7z"/><path d="M13.5 3.5V8H18M10 12.5h5M10 16h5"/>'}];
 
 /* ---------- spectrum: CIE 1931 observer (Wyman, Sloan & Shirley 2013 multi-lobe fit) -> linear sRGB ---------- */
 const CIE=(()=>{const g=(l,a,b,c,d)=>{const t=(l-b)*(l<b?c:d);return a*Math.exp(-.5*t*t)};
@@ -2248,14 +2383,14 @@ function collapseIsland(){island.classList.remove('open');setLabel(LBL);return i
 /* refraction maps for every shape the island, the orbs and the back button can take, built while the browser is idle (not in
    the middle of a dive, where building one would hold up a frame) */
 function prepGlass(){if(!GLASS.ok)return;
-  const jobs=[...PAGES.filter(p=>p.id!=='cv').map(p=>p.name),'DataLink Rover','Rover','Controller','Link','Password Helper'].map(n=>()=>{if(TIER.t>1)return;const l=closedLay(n);GLASS.prep(l.w,l.h,l.r)});
+  const jobs=[...PAGES.map(p=>p.name),'DataLink Rover','Rover','Controller','Link','Password Helper'].map(n=>()=>{if(TIER.t>1)return;const l=closedLay(n);GLASS.prep(l.w,l.h,l.r)});
   jobs.push(()=>{if(TIER.t>0||!GEO.beams)return;const l=openLay();GLASS.prep(l.w,l.h,l.r,40)},()=>{if(TIER.t>0)return;const z=GEO.os||60;GLASS.prep(z,z,z/2,24)},()=>{if(TIER.t<=1)GLASS.prep(46,46,23,50)});
   idleEach(jobs,f=>f())}
 
 /* ---------- orbs ---------- */
 const orbsBox=$('#orbs'),veil=$('#veil'),stage=$('#stage'),dimEl=$('#dim');
 const ORBS=PAGES.map((p,i)=>{const b=document.createElement('button');b.className='orb';b.setAttribute('role','menuitem');b.dataset.id=p.id;b.tabIndex=-1;b.style.setProperty('--oc',p.col);
-  b.setAttribute('aria-label',p.name+(p.id==='cv'?' (download)':''));
+  b.setAttribute('aria-label',p.name);
   b.innerHTML=`<span class="oin"><span class="og"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p.ic}</svg></span><span class="ol">${p.name}</span>`;
   orbsBox.appendChild(b);
   b.addEventListener('pointerenter',()=>hover(i));b.addEventListener('pointerleave',()=>hover(-1));
@@ -2352,7 +2487,6 @@ async function select(i){if(busy||!menuOpen)return;const P=PAGES[i];
   if(current==='pass'&&P.id==='projects'){closeMenu();setTimeout(()=>PASS.leave(),reduce?0:260);return}
   busy=true;SEL=i;clearTimeout(hovT);
   LIGHT.narrow(P.lam);setLabel(P.name);setCap(GEO.mob?`${P.lam} nm`:`λ ${P.lam} nm · monochrome`);
-  if(P.id==='cv'){await sleep(560);toast('Your CV download would start here');busy=false;SEL=-1;closeMenu();return}
   LBL=P.name;root.style.setProperty('--accent',P.col);ACCENT=P.col;
   const o=pageEl(current),n=pageEl(P.id);n.classList.add('pre');
   if(!reduce&&!window.NOWARM)warm(o,n,P);
@@ -2364,7 +2498,7 @@ function finish(o,n,P){
   o.classList.remove('active');[o,n,n.querySelector('.pw'),n.querySelector('.wash'),dimEl].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());
     Object.assign(el.style,{clipPath:'',transform:'',transformOrigin:'',opacity:'',zIndex:'',background:'',willChange:''})});
   n.querySelectorAll('.r').forEach(r=>r.style.willChange='');
-  n.classList.remove('warm');n.classList.add('active');n.classList.remove('pre');current=P.id;TH.page(P.id);PROJ.left(o,n);CT.left(o,n);DROP.pause(false);
+  n.classList.remove('warm');n.classList.add('active');n.classList.remove('pre');current=P.id;TH.page(P.id);PROJ.left(o,n);CT.left(o,n);CV.left(o,n);DROP.pause(false);
   ORBS.forEach(x=>{x.shown=false;x.b.getAnimations().forEach(a=>a.cancel());x.b.style.opacity='0';x.b.classList.remove('vis')});
   [LIGHT.el,orbsBox].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.style.transform='';el.style.opacity=''});
   LIGHT.diveEnd();root.classList.remove('hush');
@@ -2472,10 +2606,10 @@ const HOME=(()=>{const page=$('#pg-home'),sheet=$('#sheet'),shBox=sheet.querySel
 
   /* terminal: types a short intro the first time it is seen, then takes commands */
   const term=page.querySelector('.t-term'),out=term.querySelector('.term-out'),inp=term.querySelector('input');
-  const PAGES_CMD={projects:'projects',record:'record',about:'about',contact:'contact'};
+  const PAGES_CMD={projects:'projects',record:'record',about:'about',contact:'contact',cv:'cv'};
   const esc=t=>t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   const line=(html)=>{out.insertAdjacentHTML('beforeend',html+'\n');while(out.scrollHeight>out.clientHeight&&out.firstChild)out.removeChild(out.firstChild)};
-  const RUN={help:()=>'commands: whoami, skills, projects, record, about, contact, clear',
+  const RUN={help:()=>'commands: whoami, skills, projects, record, about, contact, cv, clear',
     whoami:()=>'radu matei, telecom engineer from Romania',
     skills:()=>'networking, pentesting, python, c/c++, plc and scada basics',
     clear:()=>{out.textContent='';return null}};
@@ -3380,6 +3514,123 @@ const CT=(()=>{const page=$('#pg-contact'),card=$('#ct-card'),rot=card.querySele
   reset();
   return{prep,left}})();
 
+/* ---------- CV: the page, and one entry of it brought to the middle ----------
+   Click an entry (or Enter): a copy of it glides from its place to the middle of the screen while the page blurs behind,
+   and the explanation fades in under it. Close (a click outside, Esc, the button, the back gesture) glides it back into
+   its place. Previous and Next (or the arrow keys) swap the entry under the blur without closing it. The copy and the
+   explanation live in their own scroll box, so a long one still fits a phone; the page under it does not scroll. Leaving
+   the page closes it at once. The download button plays its own small animation; nothing else announces it. */
+const CV=(()=>{const page=$('#pg-cv'),box=$('#cvf'),bg=box.querySelector('.cvf-bg'),sc=box.querySelector('.cvf-sc'),inner=sc.firstElementChild,fx=inner.querySelector('.cv-fx'),
+    segs=[...page.querySelectorAll('.cv-s')],dlb=page.querySelector('.cv-dl');
+  /* the explanations: a label, a few lines, and for the bigger entries a short list of what each part means */
+  const X={
+    msc:['Master’s',['SECI stands for Sisteme Electronice și de Comunicații Integrate: a two-year master’s in integrated electronic and communication systems, at the same faculty where I did my bachelor’s.','I started in October 2026 and expect to finish in July 2028. Alongside it I’m taking Cisco CCNA 1.']],
+    beng:['Bachelor’s',['Four years of telecommunication systems and technologies at Transilvania University of Brașov, from 2022 to 2026.'],[
+      ['DataLink Rover','My thesis, graded 9.00 out of 10: a tracked robot, its remote controller and the radio link between them, all designed and built by me. It has its own page under Projects, with 3D models you can take apart.'],
+      ['The courses','Telecommunication systems is about how signals are carried over a link, signal processing about filtering and analysing them, microcontrollers about programming small embedded boards, and computer networks about how data moves between machines.'],
+      ['The tools','MATLAB for signal work, OrCAD for schematics and AutoCAD for drawings.']],'projects'],
+    siemens:['Internship',['Two months, July to August 2025, as an intern in the PRAM department of Siemens Energy at the Petrobrazi refinery in Brazi, near Ploiești. The work was on the refinery’s electrical power distribution.'],[
+      ['Protection relays','They watch the current and voltage on each part of the network and trip the breaker when they detect a fault, such as a short circuit, so it doesn’t spread. I helped find problems in them and test them.'],
+      ['PLC and HMI','A PLC (programmable logic controller) is the industrial computer that runs the control logic; the HMI (human–machine interface) is the screen operators use to watch and control it. I did programming tasks on both.'],
+      ['SCADA','Supervisory Control and Data Acquisition: the servers and screens that let operators monitor and control the network from one place. I supported a restart of its server and the relay tests that followed.'],
+      ['6 kV and 0.4 kV switchgear','Switchgear cells hold the breakers and protection for each circuit. 6 kV is medium voltage, used to distribute power around the refinery; 0.4 kV (400 V) is the low-voltage level that feeds most equipment. I took part in testing cells at both levels.']]],
+    dlr:['Project · thesis',['My bachelor’s thesis and the biggest thing I’ve built: the rover, the remote controller and the link between them, from the electronics to the control software, written in Python.','The controller sends every command over Wi-Fi and a fibre link at the same time, so the rover keeps driving even when the radio is jammed.'],[
+      ['FPV video','First-person view: the driver sees live video from the rover’s own camera, as if sitting in it.'],
+      ['Telemetry','The live data the rover sends back, shown on the controller next to the video.']],'projects'],
+    ph:['Project',['A password manager for the desktop, built with Electron and Node.js, with a MongoDB vault backend running in Docker. Its page under Projects has the strength checker working live.'],[
+      ['zxcvbn','Rates a password by how quickly it could be guessed from its patterns (words, dates, keyboard runs), not only by its length.'],
+      ['Have I Been Pwned','Checks for known breaches without ever sending the password: only the first 5 characters of its SHA-1 hash leave the computer.'],
+      ['JWT','JSON Web Tokens: signed tokens the vault backend uses to know who is logged in.']],'projects'],
+    net:['Skills · Networking',['TCP/IP is the set of protocols the internet runs on. VLANs split one physical network into separate logical ones, routing and switching move traffic between and within networks, and a VPN is an encrypted tunnel into or between networks.','I run a MikroTik network at home, and I’m learning Cisco IOS in the CCNA 1 course.']],
+    sec:['Skills · Security',['Penetration testing means attacking a system, with permission, to find its weaknesses before someone else does. Vulnerability analysis finds and ranks those weaknesses, and a security audit checks a system against the rules it should enforce.','I covered these in the GoIT Romania cybersecurity course, and I practise in a home lab of virtual machines: Parrot OS, Metasploitable 2 and GNS3.']],
+    ind:['Skills · Industrial',['The hands-on side of my Siemens Energy internship: protection relays, PLC and HMI programming, SCADA, and testing medium- and low-voltage switchgear at the Petrobrazi refinery.']],
+    prog:['Skills · Programming',['DataLink Rover’s control software is written in Python, Password Helper in JavaScript with Node.js and Electron, and this website in plain HTML, CSS and JavaScript.','C/C++ runs on the Arduino boards in the rover and my ping pong turret, and I used Java at university, for example in Campus BikeShare.']],
+    tools:['Skills · Tools',['Linux is my everyday system. I use VMware for my security lab, Docker for Password Helper’s backend, and Git with GitHub for all my projects.','MATLAB, OrCAD and AutoCAD come from engineering courses; Arduino and Raspberry Pi boards are inside the rover and its controller.']],
+    lang:['Skills · Languages',['Romanian is my native language. My English is between B2 and C1 on the European (CEFR) scale: I read, write and work in it comfortably.']],
+    ausf:['Volunteering',['From October to November 2021 I volunteered with Youth Hub AUSF in Ploiești. I supported activities at a children’s home, mentored the kids, and took part in AUSF workshops.']],
+    ride:['Volunteering',['In October 2019 I volunteered at The Fun Ride, a community bike event in Ploiești with Asociația Diabeticilor din Prahova, to raise awareness of diabetes.']],
+    courses:['Courses',['A cybersecurity course with GoIT Romania, from September 2024 into 2025.','CCNA 1, Introduction to Networks, is the first of Cisco’s three CCNA courses. I’m taking it at Telecom Academy, since October 2026.']],
+    tennis:['Interests',['I play competitive tennis.']]};
+  const GO=aSpring(.62,.06),BACK=aSpring(.5,0);
+  let cur=null,fl=null,L=null,moving=false,cw=0;
+  const esc=t=>t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  function fill(el){const [lab,ps,dl,go]=X[el.dataset.k],i=segs.indexOf(el);
+    fx.innerHTML=`<div class="lab">${esc(lab)}</div>${ps.map(p=>`<p>${esc(p)}</p>`).join('')}`+(dl?`<dl>${dl.map(([t,d])=>`<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('')}</dl>`:'')+
+      `<nav>${go?'<button type="button" class="go" data-cv="go">See it in Projects</button>':''}<button type="button" data-cv="-1"${i?'':' hidden'}>↑ Previous</button>`+
+      `<button type="button" data-cv="1"${i<segs.length-1?'':' hidden'}>↓ Next</button><button type="button" data-cv="x">Close · Esc</button></nav>`;
+    box.setAttribute('aria-label',el.querySelector('h3,b').textContent)}
+  /* where the copy and the explanation sit: the copy a little bigger (never wider than the screen), both centred, the pair in
+     the middle of the screen and clear of the island; if they are taller than the screen, their box scrolls */
+  function layout(el){const vw=innerWidth,vh=innerHeight,s=Math.min(1.2,Math.min(860,vw-32)/cw),h=el.offsetHeight*s,pad=parseFloat(getComputedStyle(el).paddingLeft)*s,
+      fw=Math.round(cw*s-2*pad);fx.style.width=fw+'px';const fh=fx.offsetHeight,gap=22,
+      top=Math.max(84,(vh-(h+gap+fh))/2);
+    inner.style.height=Math.ceil(Math.max(vh,top+h+gap+fh+56))+'px';
+    return{s,x:(vw-cw*s)/2,y:top,fx:(vw-fw)/2,fy:top+h+gap}}   // same left edge as the copy's text
+  const at=(x,y,s=1)=>`translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) scale(${s.toFixed(4)})`;
+  async function open(el,keep){if(cur||moving||busy||menuOpen||current!=='cv')return;moving=true;cur=el;
+    fill(el);const r=el.getBoundingClientRect();cw=r.width;
+    fl=el.cloneNode(true);['tabindex','role','aria-haspopup','data-k'].forEach(a=>fl.removeAttribute(a));fl.setAttribute('aria-hidden','true');fl.classList.add('cv-fl');
+    fl.style.width=cw+'px';inner.appendChild(fl);
+    box.classList.add('on');sc.scrollTop=0;L=layout(el);
+    el.classList.add('gone');page.style.overflowY='hidden';
+    const D=reduce?1:GO.ms,end=at(L.x,L.y,L.s),fend=`translate3d(${L.fx.toFixed(1)}px,${L.fy.toFixed(1)}px,0)`;
+    fl.style.transform=end;fx.style.transform=fend;fx.style.opacity='1';bg.style.opacity='1';
+    if(!keep)bg.animate([{opacity:0},{opacity:1}],{duration:reduce?1:520,easing:'cubic-bezier(.3,0,.2,1)'});
+    const a=fl.animate([{transform:at(r.left,r.top)},{transform:end}],{duration:D,easing:GO.e});
+    fx.animate([{opacity:0,transform:fend+' translateY(18px)',filter:'blur(6px)'},{opacity:1,transform:fend,filter:'blur(0px)'}],{duration:reduce?1:560,delay:reduce?0:D*.28,easing:SOFT,fill:'backwards'});
+    await a.finished.catch(()=>{});moving=false;
+    const c=fx.querySelector('[data-cv="x"]');if(c)c.focus({preventScroll:true,focusVisible:false})}
+  function clean(){const el=cur;if(fl)fl.remove();fl=null;cur=null;L=null;if(el)el.classList.remove('gone');
+    [bg,fx].forEach(e=>{e.getAnimations().forEach(a=>a.cancel());e.style.opacity='0'});fx.style.transform='';inner.style.height='';
+    box.classList.remove('on');page.style.overflowY='';return el}
+  async function close(now){if(!cur)return;if(now||reduce){const el=clean();if(!now&&el)el.focus({preventScroll:true});moving=false;return}
+    if(moving)return;moving=true;const el=cur,st=sc.scrollTop,r=el.getBoundingClientRect();sc.scrollTop=0;
+    const from=at(L.x,L.y-st,L.s),ff=`translate3d(${L.fx.toFixed(1)}px,${(L.fy-st).toFixed(1)}px,0)`;
+    fl.style.transform=at(r.left,r.top);fx.style.transform=ff;fx.style.opacity='0';bg.style.opacity='0';
+    fx.animate([{opacity:1,transform:ff},{opacity:0,transform:ff+' translateY(10px)'}],{duration:180,easing:IN});
+    bg.animate([{opacity:1},{opacity:0}],{duration:BACK.ms*.8,delay:BACK.ms*.12,easing:'cubic-bezier(.4,0,.6,1)',fill:'backwards'});
+    await fl.animate([{transform:from},{transform:at(r.left,r.top)}],{duration:BACK.ms,easing:BACK.e}).finished.catch(()=>{});
+    clean();moving=false;el.focus({preventScroll:true,focusVisible:false})}
+  /* Previous / Next: the copy and its words fade out, the page moves to the next entry under the blur, which then flies out */
+  async function step(d){if(!cur||moving)return;const nx=segs[segs.indexOf(cur)+d];if(!nx)return;moving=true;
+    if(!reduce)await Promise.all([fl,fx].map(e=>e.animate([{opacity:1},{opacity:0}],{duration:200,easing:IN,fill:'forwards'}).finished)).catch(()=>{});
+    const el=cur;fl.remove();fl=null;cur=null;el.classList.remove('gone');fx.getAnimations().forEach(a=>a.cancel());
+    const pr=page.getBoundingClientRect(),nr=nx.getBoundingClientRect();page.scrollTop+=nr.top+nr.height/2-(pr.top+pr.height*.42);
+    moving=false;await open(nx,true)}
+  page.addEventListener('click',e=>{const s=e.target.closest('.cv-s');if(s&&!e.target.closest('a,button'))open(s)});
+  page.addEventListener('keydown',e=>{const s=e.target.closest&&e.target.closest('.cv-s');if(s&&(e.key==='Enter'||e.key===' ')){e.preventDefault();open(s)}});
+  box.addEventListener('click',e=>{const b=e.target.closest('[data-cv]');
+    if(b){const v=b.dataset.cv;if(v==='x')close();else if(v==='go'){close(true);jump('projects')}else step(+v);return}
+    if(!e.target.closest('.cv-fx'))close()});
+  addEventListener('keydown',e=>{if(!cur||menuOpen)return;
+    if(e.key==='Escape'){e.preventDefault();close()}
+    else if(e.key==='ArrowDown'||e.key==='ArrowRight'){e.preventDefault();step(1)}
+    else if(e.key==='ArrowUp'||e.key==='ArrowLeft'){e.preventDefault();step(-1)}
+    else if(e.key==='Tab'){const f=[...fx.querySelectorAll('button:not([hidden])')],i=f.indexOf(document.activeElement);   // focus stays in the dialog
+      if(e.shiftKey?i<=0:i===f.length-1){e.preventDefault();f[e.shiftKey?f.length-1:0].focus()}}});
+  addEventListener('popstate',()=>{if(cur)close()});
+  addEventListener('resize',()=>{if(!cur||moving)return;L=layout(cur);fl.style.transform=at(L.x,L.y,L.s);fx.style.transform=`translate3d(${L.fx.toFixed(1)}px,${L.fy.toFixed(1)}px,0)`});
+  /* the download: the browser saves the file; the button shows it (the arrow drops into a ring, the ring fills, a tick) */
+  let dT=0;dlb.addEventListener('click',()=>{clearTimeout(dT);dlb.dataset.st='go';dT=setTimeout(()=>{dlb.dataset.st='done';dT=setTimeout(()=>delete dlb.dataset.st,2400)},reduce?0:1250);
+    if(live)setTimeout(()=>count(true),1600)});
+  /* how many times it was downloaded: a small program on Cloudflare (workers/cv-counter) keeps one number and nothing about
+     anyone. The page asks for it only when the CV page is shown, with no cookies and no referrer. Once it answers, the button
+     downloads through it (that is what counts); if it can't be reached, the button keeps the file on this site and the
+     line stays hidden. */
+  const API='https://api.radumatei.ro',stat=page.querySelector('.cv-n'),statT=stat.querySelector('span');let live=false,shown=-1,cT=0;
+  const words=n=>n===0?'Not downloaded yet':n===1?'Downloaded <b>once</b>':`Downloaded <b>${n.toLocaleString('en-GB')}</b> times`;
+  function show(n,bump){if(n===shown)return;const from=shown<0?0:shown;shown=n;stat.classList.add('on');
+    if(bump){stat.classList.remove('bump');stat.offsetWidth;stat.classList.add('bump')}
+    if(reduce||n-from<2){statT.innerHTML=words(n);return}
+    const t0=performance.now(),D=Math.min(1200,300+(n-from)*40);cancelAnimationFrame(cT);   // counts up, easing out
+    (function f(t){const k=Math.min(1,(t-t0)/D),v=Math.round(from+(n-from)*(1-Math.pow(1-k,3)));statT.innerHTML=words(v);if(k<1)cT=requestAnimationFrame(f)})(t0)}
+  function count(bump){fetch(API+'/cv-count',{cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'})
+    .then(r=>r.ok?r.json():null).then(j=>{if(!j||typeof j.downloads!=='number')return;
+      if(!live){live=true;dlb.href=API+'/cv.pdf'}show(j.downloads,bump&&j.downloads>shown&&shown>=0)}).catch(()=>{})}
+  /* called from finish(): leaving the page closes an open entry at once */
+  function left(o,n){if(o===page&&n!==page){close(true);clearTimeout(dT);delete dlb.dataset.st}if(n===page)count()}
+  return{left,open,close,get isOpen(){return !!cur}}})();
+
 /* ---------- ambient light: the textures and particles of .abg (see its CSS) ----------
    Each page's layer is filled once: three pools (the page's colour, its neighbour in the spectrum, the season's tint) and
    its signature motion, each drawn once into a small canvas that the GPU stretches; then the season's particles, as many as
@@ -3416,6 +3667,12 @@ const AMBIENT=(()=>{const boxes=[...document.querySelectorAll('.abg')],rgb=h=>[1
     g.fillStyle=v;g.fillRect(0,0,w,h)},'ab-scan');
   const ring=(c,cls)=>tex(192,192,(g,w)=>{const r=w/2,gr=g.createRadialGradient(r,r,0,r,r,r);
     [[0,0],[.6,0],[.74,.2],[.8,.5],[.85,.2],[.93,.05],[1,0]].forEach(([o,a])=>gr.addColorStop(o,`rgba(${c},${a})`));g.fillStyle=gr;g.fillRect(0,0,w,w)},cls);
+  /* CV: one page of light, brighter at the top, with faint lines of text on it; its edges fade out */
+  const sheet=(c,seed,cls)=>tex(120,162,(g,w,h)=>{const lg=g.createLinearGradient(0,0,0,h);lg.addColorStop(0,`rgba(${c},.75)`);lg.addColorStop(.55,`rgba(${c},.32)`);lg.addColorStop(1,`rgba(${c},0)`);
+    g.fillStyle=lg;g.fillRect(0,0,w,h);g.fillStyle='rgba(255,255,255,.22)';
+    for(let y=26,k=0;y<h*.8;y+=9,k++){if(k%5===4){y+=6;continue}g.fillRect(20,y,(w-40)*(.55+.45*Math.abs(Math.sin(seed*3.1+k*1.7))),2.2)}
+    g.globalCompositeOperation='destination-in';const hx=g.createLinearGradient(0,0,w,0);[[0,0],[.14,1],[.86,1],[1,0]].forEach(([o,a])=>hx.addColorStop(o,`rgba(0,0,0,${a})`));g.fillStyle=hx;g.fillRect(0,0,w,h);
+    const vy=g.createLinearGradient(0,0,0,h);[[0,0],[.08,1],[.7,1],[1,0]].forEach(([o,a])=>vy.addColorStop(o,`rgba(0,0,0,${a})`));g.fillStyle=vy;g.fillRect(0,0,w,h)},cls);
   /* the season's particles: count, size (px), fall time (s), sway (px), turn (deg), opacity; scaled down by the tier */
   const FX={snow:[16,3,7,11,19,14,34,0,.8],ember:[12,4,8,9,15,10,26,0,.9],spark:[12,3,6,2.4,4.6,0,0,0,.9],confetti:[14,6,10,8,13,12,30,220,.85],
     petal:[9,7,11,13,20,24,48,160,.75],martisor:[10,4,7,12,18,12,26,0,.8],mote:[12,3,5,14,22,16,40,0,.7],leaf:[8,8,12,12,18,30,60,300,.8]};
@@ -3435,6 +3692,7 @@ const AMBIENT=(()=>{const boxes=[...document.querySelectorAll('.abg')],rgb=h=>[1
     else if(kind==='rays'&&window.CanvasRenderingContext2D&&CanvasRenderingContext2D.prototype.createConicGradient)box.append(rays(c));
     else if(kind==='waves')box.append(wave(pc,nb,1.3,'ab-wave w1'),wave(nb,pc,4.2,'ab-wave w2'));
     else if(kind==='rings')box.append(...['r1','r2','r3'].map(k=>ring(c,'ab-ring '+k)));
+    else if(kind==='pages'){const lite=rgb(pc).map(v=>Math.round(v+(255-v)*.35)).join(',');box.append(sheet(c,4.2,'ab-sheet s4'),sheet(c,1.3,'ab-sheet s1'),sheet(lite,2.6,'ab-sheet s2'),sheet(n,.7,'ab-sheet s3'))}
     else if(kind==='scan'){const grid=document.createElement('div');grid.className='ab-grid';box.append(grid,beam(rgb(pc).map(v=>Math.round(v+(255-v)*.35)).join(',')))}
     TH.back(box);particles(box)}
   function start(){const home=boxes.filter(b=>b.closest('#pg-home'));
