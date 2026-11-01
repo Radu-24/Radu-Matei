@@ -11,3 +11,6 @@
 # The packed 3D models are generated data (tools/build_models.py writes them):
 # no line-by-line diffs, and left out of GitHub's language statistics
 site/assets/models/*.js -diff linguist-generated
+
+# The stills' positions are generated too (tools/bake_stills.py)
+site/assets/stills/stills.js -diff linguist-generated

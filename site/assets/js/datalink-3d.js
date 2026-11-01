@@ -11,7 +11,10 @@ const PI=Math.PI,TAU=PI*2,clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v)),lerp=(a,b
   ss=(a,b,x)=>{const t=clamp((x-a)/(b-a));return t*t*(3-2*t)},s5=t=>{t=clamp(t);return t*t*t*(t*(t*6-15)+10)},
   wrap=a=>{a=(a+PI)%TAU;if(a<0)a+=TAU;return a-PI},easeIO=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
 let T=null,ren=null,scene,cam,cv=null,ready=null,ro=null,slot=null,tier=0,W=1,H=1,BW=0,BH=0,bufT=0;
-let raf=0,last=0,lastDraw=0,force=0,shown=false,dirty=true,vt=0,tscale=1,spinR=0,mode='card',tw=null,fixedGoal=null,wC=1,wS=0;
+/* the card's rover starts turned three quarters to the camera: the still that stands in for it while it loads (and without
+   WebGL) is rendered at this same angle, so the live view takes over without a jump */
+const CARD_YAW=-.7;
+let raf=0,last=0,lastDraw=0,force=0,shown=false,dirty=true,vt=0,tscale=1,spinR=CARD_YAW,mode='card',tw=null,fixedGoal=null,wC=1,wS=0;
 const perf={ms:0,n:0},story={type:'hero',k:0,t:0},hov={r:0,m:0,l:0,rT:0,mT:0,lT:0,cx:0,cy:0,cxT:0,cyT:0},frameSubs=[];
 /* card camera: the model fills its card slot the same way at any slot size (radius and centre come from the model) */
 let R0=1.45,TGT=[0,.8,0];const DIR=(()=>{const v=[0,.34,1],l=Math.hypot(...v);return v.map(x=>x/l)})(),CFOV=26,tanH=d=>Math.tan(d*PI/360);
@@ -413,9 +416,11 @@ function frame(ts){raf=0;const raw=last?(ts-last)/1000:0;last=ts;const dt=Math.m
   else if(!settled(g)){const a=1-Math.exp(-dt*10);for(const k of KEYS)cur[k]+=(g[k]-cur[k])*a;moving=true}
   const anim=busyAnim(),show=shown||vt<force;if(moving)lastMove=vt;if(show&&(moving||anim))watchLod(raw);
   if(show&&ren&&(moving||anim||dirty)&&(tier===0||moving||dirty||ts-lastDraw>31||mode==='card'&&hov.r>.02)){
-    const p0=performance.now();apply(dt);ren.render(scene,cam);lastDraw=ts;dirty=false;for(const f of frameSubs)f();perf.ms+=performance.now()-p0;perf.n++}
+    const p0=performance.now();apply(dt);ren.render(scene,cam);lastDraw=ts;dirty=false;for(const f of frameSubs)f();if(drawnQ.length)drawnQ.splice(0).forEach(f=>f());perf.ms+=performance.now()-p0;perf.n++}
   if(show&&(moving||anim||dirty||vt<force))raf=requestAnimationFrame(frame);else last=0}
 const wake=()=>{if(!raf&&(shown||vt<force))raf=requestAnimationFrame(frame)};
+/* the page waits for the first real picture before it shows the canvas over the still that stands in for it */
+const drawnQ=[],onDrawn=()=>new Promise(r=>{drawnQ.push(r);dirty=true;wake()});
 
 /* ---------- size ---------- */
 function frameTo(w,h){w=Math.max(1,Math.round(w));h=Math.max(1,Math.round(h));if(!ren||(w===W&&h===H))return;W=w;H=h;dirty=true;placeLink();wake()}
@@ -482,10 +487,18 @@ const pageBusy=()=>!!(api.busy&&api.busy()),calm=()=>new Promise(r=>(function c(
 /* shaders are compiled before the first frame needs them (in the background where the GPU driver allows it), so the first
    picture never stops to compile them in the middle of a transition */
 function precompile(){try{if(ren.compileAsync&&ren.extensions.has('KHR_parallel_shader_compile'))return ren.compileAsync(scene,cam).catch(()=>{});ren.compile(scene,cam)}catch(e){}return Promise.resolve()}
+/* no WebGL (switched off, blocked, no GPU, a crawler's browser) or no model: the same views as pictures, rendered from these
+   models ahead of time (tools/bake_stills.js), in assets/js/datalink-stills.js. ?gl=0 shows them on purpose, for testing */
+function stills(why){console.info('DataLink: showing the pre-rendered stills',why||'');
+  return dataScript('assets/js/datalink-stills.js','DL3D_STILLS','dl-stills-js').then(f=>f(api,{frameSubs,drawn:onDrawn})).then(()=>true,e=>{console.warn('DataLink: stills unavailable',e);return false})}
+/* checked before three.js is fetched, so a browser without WebGL never downloads it; the test context is let go at once */
+const noGL=()=>/[?&]gl=0/.test(location.search)||!(()=>{try{const c=document.createElement('canvas'),g=window.WebGLRenderingContext&&(c.getContext('webgl2')||c.getContext('webgl'));
+  if(!g)return false;const x=g.getExtension('WEBGL_lose_context');if(x)x.loseContext();return true}catch(e){return false}})();
 function init(t){tier=t|0;if(ready)return ready;
+  if(noGL())return ready=stills('no WebGL');
   ready=Promise.all([import('three'),import('three/addons/environments/RoomEnvironment.js')]).then(async([t3])=>{T=t3;await calm();
     cv=document.createElement('canvas');cv.className='dl3d';
-    try{ren=new T.WebGLRenderer({canvas:cv,antialias:tier===0,alpha:true,powerPreference:'low-power'})}catch(e){console.info('3D: no WebGL',e);return false}
+    try{ren=new T.WebGLRenderer({canvas:cv,antialias:tier===0,alpha:true,powerPreference:'low-power'})}catch(e){console.info('3D: no WebGL',e);ren=null;cv=null;return stills(e)}
     ren.toneMapping=T.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.setClearColor(0,0);
     scene=new T.Scene();cam=new T.PerspectiveCamera(30,1,.05,80);
     scene.add(new T.HemisphereLight(0xdfe6ff,0x20160c,.45));
@@ -507,7 +520,7 @@ function init(t){tier=t|0;if(ready)return ready;
     /* the rover first (the project card needs it), then the controller */
     try{const RM=await dataScript('assets/models/rover.js','DL_ROVER','dl-rover'),ms=await unpack(RM);await calm();rover=buildRover(ms,RM);scene.add(rover.root);
       const b=rover.body;R0=b.r*.98;TGT=[b.c.x,b.c.y,b.c.z]}
-    catch(e){console.warn('DataLink: rover model unavailable',e);return false}
+    catch(e){console.warn('DataLink: rover model unavailable',e);try{ren.dispose()}catch(x){}ren=null;cv=null;return stills(e)}
     Object.assign(cur,pose());
     dataScript('assets/models/remote.js','DL_REMOTE','dl-remote').then(unpack).then(async ms=>{await calm();remote=buildRemote(ms,window.DL_REMOTE);scene.add(remote.root,remote.shadow);placeLink();dirty=true;wake();(api.onRemote||(()=>{}))();
         /* the controller's screen, the link and its glow are first drawn on the pick screen, in the middle of a transition:
@@ -517,13 +530,13 @@ function init(t){tier=t|0;if(ready)return ready;
       .catch(e=>console.warn('DataLink: controller model unavailable',e));
     if(W>1)placeLink();
     await calm();await precompile();
-    return true}).catch(e=>{console.info('3D unavailable',e);return false});
+    return true}).catch(e=>{console.info('3D unavailable',e);if(ren)return false;ren=null;cv=null;return stills(e)});
   return ready}
 
 /* ---------- public ---------- */
 const P3=()=>tmpV||(tmpV=new T.Vector3());
 function project(x,y,z){const v=P3().set(x,y,z).project(cam);return{x:(v.x*.5+.5)*W,y:(-v.y*.5+.5)*H,z:v.z,ok:v.z<1}}
-const api=window.DL3D={init,
+const api=window.DL3D={init,kind:'gl',drawn:onDrawn,
   get ok(){return !!ren&&!!rover},get canvas(){return cv},get mode(){return mode},get size(){return[W,H]},get remoteReady(){return !!remote},
   mount(el){if(!cv)return;slot=el;if(cv.parentNode!==el)el.appendChild(cv);
     if(!ro)ro=new ResizeObserver(es=>{for(const e of es)if(e.target===slot&&cv.parentNode===slot){const r=e.contentRect;if(r.width&&r.height)setSize(r.width,r.height)}});
@@ -552,5 +565,7 @@ const api=window.DL3D={init,
   stops(which){const o=which==='rover'?rover:remote;return o?o.STOPS.map(s=>s.key):[]},
   cardTops(which,a){CT[which]=a;dirty=true;wake()},
   onFrame(f){frameSubs.push(f)},
-  setTier(t){tier=t;BW=0;buffer();maybeHi()},get lod(){return LOD.level},loadHi(){return loadHi()},setTimeScale(k){tscale=k},_advance(sec){xtra+=sec;dirty=true;wake()},_dbg:()=>({remote,rover,cur,scene,cam,T,LOD,tier,shown,tw}),_perf:()=>{const r={ms:perf.ms,n:perf.n,avg:perf.n?perf.ms/perf.n:0,calls:ren.info.render.calls,tris:ren.info.render.triangles};perf.ms=perf.n=0;return r}};
+  setTier(t){tier=t;BW=0;buffer();maybeHi()},get lod(){return LOD.level},loadHi(){return loadHi()},setTimeScale(k){tscale=k},_advance(sec){xtra+=sec;dirty=true;wake()},_dbg:()=>({remote,rover,cur,scene,cam,T,LOD,tier,shown,tw}),
+  /* tools/bake_stills.js only: draw one exact frame by hand (no sway, no spin, chosen layers) and read it back */
+  _bake:()=>({ren,apply,cur,link,padR,padM,floorM,remote,rover,scene,cam,setSpin(v){spinR=v},hov,cardYaw:CARD_YAW}),_perf:()=>{const r={ms:perf.ms,n:perf.n,avg:perf.n?perf.ms/perf.n:0,calls:ren.info.render.calls,tris:ren.info.render.triangles};perf.ms=perf.n=0;return r}};
 })();

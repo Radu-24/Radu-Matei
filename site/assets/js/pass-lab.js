@@ -448,6 +448,8 @@
       tick();
     }
     $$('[data-try]').forEach(b => b.addEventListener('click', () => typeIn(b.dataset.try === 'gen' ? GEN.password({length: 20, lower: 1, upper: 1, digits: 1, symbols: 1}) : b.dataset.try)));
+    /* the small Check in The rules does exactly what "Check this password" does (the privacy notice names both): it brings the
+       leak check into view, so the request is seen leaving, and runs the same runLeak() */
     checks.breach.querySelector('button').addEventListener('click', () => { leakBox.scrollIntoView({behavior: reduce() ? 'auto' : 'smooth', block: 'center'}); setTimeout(runLeak, reduce() ? 0 : 450) });
 
     /* ---- the leak check: k-anonymity, shown ---- */

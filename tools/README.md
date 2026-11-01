@@ -59,8 +59,11 @@ Then reload the page. When you are trying out changes, add `--fast` for a quicke
 
 ```
 build_models.py          runs the three build steps and copies the results into site/assets/models
+bake_stills.py           renders the 3D views as pictures for browsers without WebGL, into site/assets/stills
 requirements.txt         packages for the build
 requirements-cad.txt     extra packages for re-exporting the CAD meshes
+requirements-stills.txt  packages for bake_stills.py (Playwright and Pillow)
+og/                      og.html + render.py: the link preview picture (site/assets/img/og.jpg), from the site's fonts and the card still
 datalink3d/
   make_rover.py          step 1: builds the rover at two detail levels and paints the texture atlas
   pack_rover.py          step 2: bakes ambient occlusion into the rover and packs it
@@ -80,6 +83,28 @@ cad/                     the CAD meshes the build starts from
 fonts/                   DejaVu Sans for the painted labels (licence in fonts/LICENSE)
 work/, build/            created by the build; ignored by git
 ```
+
+## Stills for browsers without WebGL
+
+Some browsers can't draw WebGL at all: it is switched off, a policy blocks it, there is no usable GPU, or it is an AI agent's headless browser. For them the page shows pictures instead, and the Projects card shows one while the live 3D view loads. `bake_stills.py` makes them from the real 3D view: it opens the site in headless Chromium (SwiftShader draws WebGL on the CPU), sets every pose the page uses and saves each frame.
+
+```
+python3 -m venv .venv-stills
+.venv-stills/bin/python -m pip install -r tools/requirements-stills.txt
+.venv-stills/bin/python -m playwright install chromium
+.venv-stills/bin/python tools/bake_stills.py              (all of it, about 15 minutes on two cores)
+.venv-stills/bin/python tools/bake_stills.py --only card  (just the card picture)
+```
+
+It writes `site/assets/stills/`:
+
+| File | Contents |
+|---|---|
+| `card-1400.webp`, `card-700.webp` | the rover on the Projects card, at the angle the live view starts from |
+| `wide/`, `tall/` | for a wide (1600 × 1000) and a tall (400 × 866) screen: the pick screen in layers (floor, pads, controller, link, rover) and the hero, taken-apart and eight part views of both stories |
+| `stills.js` | where each picture sits in its frame, and where the pick buttons and part labels go |
+
+Each picture is trimmed to what is drawn and saved as WebP with transparency, so it sits on the page's own background. Run it after `build_models.py` whenever a model changes, and after changing a camera pose in `datalink-3d.js`.
 
 ## Where the geometry comes from
 

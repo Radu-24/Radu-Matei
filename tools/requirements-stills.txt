@@ -1,0 +1,4 @@
+# Packages for tools/bake_stills.py (the pictures shown when a browser can't draw WebGL).
+# After installing, fetch the browser once: python -m playwright install chromium
+playwright==1.63.0
+pillow==12.3.0
