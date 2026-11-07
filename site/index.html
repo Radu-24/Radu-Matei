@@ -1430,6 +1430,136 @@ button.pj{cursor:pointer}
 @media (max-width:640px) and (max-height:700px){.ct-ms{display:none}.ct-in{gap:8px;padding:18px}}
 @media (prefers-reduced-motion:reduce){.ct-float{animation:none}.ct-rw,.ct-ul,.ct-segi,.ct-pane{transition:none}}
 </style>
+<style>
+/* ---------- Record: a time ruler ----------
+   The page is a ruler of months, top to bottom. Every entry is a bar from the month it began to the month it ends (or is
+   planned to end), with its story card pinned at its start. Long stretches with nothing on the record are folded, so the
+   ruler never runs empty. A reading line in the middle of the screen gives the month it crosses; the year next to it stays
+   put while you are in that year, the bars it crosses light up and the cards it reaches come forward. A small map at the top
+   shows the whole range and where you are; click it to jump. Nothing is stored. */
+.p-record .pc{max-width:1180px}
+.rc{position:relative;margin-top:46px}
+.rc-sum{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 34px;margin-bottom:22px}
+.rc-st b{display:block;font-size:clamp(30px,3.6vw,46px);font-weight:700;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+.rc-st span{display:block;margin-top:6px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.rc-st.rx-nx b{font-size:clamp(18px,1.8vw,22px);letter-spacing:-.02em;line-height:1.2;max-width:22ch}
+.rc-key{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+.rc-key button{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:600;color:#DCE0EA;
+  background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);transition:background .3s,opacity .3s}
+.rc-key button i{width:8px;height:8px;border-radius:50%;background:var(--lc)}
+.rc-key button:hover{background:rgba(255,255,255,.12)}.rc-key button.off{opacity:.38}
+
+/* the small map: the whole range at a glance, and where you are */
+.rc-mm{position:sticky;top:calc(78px + env(safe-area-inset-top,0px));z-index:6;border-radius:18px;padding:10px 14px 8px;margin-bottom:28px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.rc-mm .rx-tr{position:relative;height:30px}
+.rc-mm .rx-ln{position:absolute;height:3px;border-radius:2px;background:var(--lc);opacity:.85}
+.rc-mm .rx-ln.rx-pl{opacity:.45;background:repeating-linear-gradient(90deg,var(--lc) 0 4px,transparent 4px 7px)}
+.rc-mm .rx-pt{position:absolute;width:6px;height:6px;margin:-1.5px 0 0 -3px;transform:rotate(45deg);background:var(--lc)}
+.rc-mm .rx-td{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px solid var(--pc);box-shadow:0 0 8px var(--pc)}
+.rc-mm .rx-win{position:absolute;top:-6px;bottom:-6px;border-radius:7px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55);transition:left .12s linear,width .12s linear}
+.rc-mm .rx-ax{position:relative;height:14px;margin-top:4px}
+.rc-mm .rx-ax span{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:10px;color:#6A7085}
+
+/* the ruler */
+.rc-ru{position:relative;--ax:92px;--lw:34px;--lanes:5}
+.rc-yb{position:absolute;left:0;right:0}
+.rc-yb::before{content:"";position:absolute;left:0;right:0;top:0;border-top:1px solid rgba(255,255,255,.16)}
+.rc-yl{position:sticky;top:calc(50vh - 70px);opacity:.45;display:block;width:var(--ax);font-size:clamp(28px,3vw,40px);font-weight:700;letter-spacing:-.055em;line-height:1;padding-top:8px;color:#DCE0EA;
+  font-variant-numeric:tabular-nums;transition:color .3s}
+.rc-yb.on .rc-yl{color:var(--pc);opacity:1}
+.rc-mt{position:absolute;left:0;right:0;height:0;border-top:1px solid rgba(255,255,255,.035)}
+.rc-mt.q{border-top-color:rgba(255,255,255,.07)}
+.rc-mt i{position:absolute;left:54px;top:-7px;font-style:normal;font-family:var(--mono);font-size:10px;color:#4d5263}
+.rc-gap{position:absolute;left:0;right:0;display:flex;align-items:center;gap:14px;padding-left:calc(var(--ax) + var(--lw) * var(--lanes) + 26px)}
+.rc-gap svg{position:absolute;left:0;right:0;top:50%;width:100%;height:16px;margin-top:-8px;overflow:visible}
+.rc-gap svg path{fill:none;stroke:rgba(255,255,255,.16);stroke-width:1.2;stroke-dasharray:4 5}
+.rc-gap span{position:relative;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:#6A7085;background:var(--bg);padding:3px 10px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.rc-plz{position:absolute;left:var(--ax);right:0;bottom:0;pointer-events:none;
+  background:repeating-linear-gradient(-45deg,rgba(255,255,255,.018) 0 2px,transparent 2px 12px)}
+.rc-plz b{position:absolute;right:0;top:12px;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.12em;color:#6A7085}
+.rc-now{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--pc);box-shadow:0 0 16px var(--pc);z-index:3}
+.rc-now b{position:absolute;right:0;top:-22px;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.1em;color:var(--pc)}
+.rc-now::before{content:"";position:absolute;left:calc(var(--ax) - 6px);top:-6px;width:10px;height:10px;border-radius:50%;background:var(--pc);box-shadow:0 0 12px var(--pc)}
+
+/* bars */
+.rc-lanes{position:absolute;left:var(--ax);top:0;bottom:0;width:calc(var(--lw) * var(--lanes))}
+.rc-lanes>.rx-gl{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.04);transform:translateX(calc(var(--lw) / 2))}
+.rc-b{position:absolute;width:12px;margin-left:calc(var(--lw) / 2 - 6px);border-radius:99px;cursor:pointer;transform-origin:50% 0;transition:filter .3s,opacity .35s}
+.rc-b .rx-f{position:absolute;inset:0;border-radius:inherit;background:var(--lc);box-shadow:0 0 14px -3px var(--lc)}
+.rc-b[data-st=now] .rx-f{background:linear-gradient(180deg,var(--lc) var(--p,50%),transparent var(--p,50%)),repeating-linear-gradient(45deg,color-mix(in srgb,var(--lc) 55%,transparent) 0 3px,transparent 3px 7px);
+  box-shadow:inset 0 0 0 1.5px var(--lc),0 0 14px -3px var(--lc)}
+.rc-b[data-st=open] .rx-f{background:linear-gradient(180deg,var(--lc) calc(100% - 70px),transparent)}
+.rc-b[data-st=plan] .rx-f{background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--lc) 25%,transparent) 0 3px,transparent 3px 7px);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--lc) 80%,transparent)}
+.rc-b.rx-pt{width:16px;height:16px;margin-left:calc(var(--lw) / 2 - 8px)}
+.rc-b.rx-pt .rx-f{border-radius:4px;transform:rotate(45deg) scale(.8)}
+.rc-b .rx-mk{position:absolute;left:50%;width:12px;height:12px;margin:-6px 0 0 -6px;transform:rotate(45deg);border-radius:2px;background:#fff;box-shadow:0 0 0 2px var(--bg),0 0 12px #fff}
+.rc-b .rx-lt{position:absolute;left:50%;top:0;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;opacity:0;pointer-events:none;transition:opacity .25s;
+  background:radial-gradient(closest-side,#fff,color-mix(in srgb,var(--lc) 70%,transparent) 45%,transparent)}
+.rc-b.act{filter:brightness(1.18)}.rc-b.act .rx-lt{opacity:1}
+.rc-b.hot{filter:brightness(1.3)}
+.rc-ru.flt .rc-b.dim,.rc-ru.flt .rc-c.dim,.rc-ru.flt path.dim{opacity:.14!important}
+
+/* story cards, pinned at the month each entry began */
+.rc-cards{position:absolute;left:calc(var(--ax) + var(--lw) * var(--lanes) + 34px);right:0;top:0}
+.rc-cx{position:absolute;left:0;top:0;width:100%;pointer-events:none;overflow:visible;z-index:1}
+.rc-cx path{fill:none;stroke-width:1.2;opacity:.32;transition:opacity .3s}
+.rc-cx path.hot,.rc-cx path.on{opacity:.95}
+.rc-lanes{z-index:2}.rc-cards{z-index:2}
+.rc-c{position:absolute;left:0;right:0;max-width:640px;border-radius:24px;padding:18px 20px 16px;opacity:.62;transform:translateX(0);
+  transition:opacity .45s,transform .6s cubic-bezier(.16,1,.3,1),box-shadow .45s}
+.rc-c::after{display:none}
+.rc-c.on{opacity:1;transform:translateX(6px);box-shadow:var(--lq-depth),0 22px 54px rgba(0,0,0,.38),0 0 0 1px color-mix(in srgb,var(--lc) 45%,transparent)}
+.rc-c.hot{opacity:1}
+.rc-c.pre{opacity:0;transform:translateY(18px)}
+.rc-c .rx-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rc-c .rx-dr{font-family:var(--mono);font-size:12px;color:#AEB4C4;font-variant-numeric:tabular-nums}
+.rc-c .rx-ln{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--lc)}
+.rc-c .rx-ln::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--lc)}
+.rc-c .rx-stt{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);color:#AEB4C4}
+.rc-c[data-st=now] .rx-stt,.rc-c[data-st=open] .rx-stt{color:var(--pc);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc) 60%,transparent)}
+.rc-c[data-st=plan] .rx-stt{box-shadow:none;outline:1px dashed rgba(255,255,255,.25);outline-offset:-1px}
+.rc-c h3{margin:10px 0 4px;font-size:clamp(19px,1.9vw,23px);letter-spacing:-.025em;line-height:1.15}
+.rc-c .rx-du{font-size:13px;color:var(--muted)}
+.rc-c p{margin:8px 0 0;font-size:14.5px;color:#C9CEDA;line-height:1.5;max-width:62ch}
+.rc-c .rx-pg{position:relative;height:4px;border-radius:2px;margin-top:12px;background:rgba(255,255,255,.08);overflow:hidden}
+.rc-c .rx-pg i{position:absolute;left:0;top:0;bottom:0;width:var(--p);border-radius:inherit;background:var(--lc);box-shadow:0 0 10px var(--lc)}
+.rc-c .rx-ms{display:inline-flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:#DCE0EA}
+.rc-c .rx-ms i{width:9px;height:9px;transform:rotate(45deg);border-radius:2px;background:#fff}
+.rc-c .rx-ac{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.rc-c .rx-ac button{border:0;cursor:pointer;border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:650;background:rgba(255,255,255,.08);transition:background .25s}
+.rc-c .rx-ac button:hover{background:rgba(255,255,255,.15)}
+.rc-c .rx-ac .rc-go{background:var(--pc);color:#07080D}.rc-c .rx-ac .rc-go:hover{filter:brightness(1.08);background:var(--pc)}
+.rc-c .rx-ac button[disabled]{cursor:default;background:none;color:#7D8396;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.rc-c .rx-mo{height:0;overflow:hidden}
+.rc-c .rx-mo>div{padding-top:4px}
+.rc-c .rx-mo dl{margin:10px 0 0;display:grid;gap:8px}.rc-c .rx-mo dt{font-weight:650;font-size:13.5px}.rc-c .rx-mo dd{margin:2px 0 0;font-size:13.5px;color:#AEB4C4;line-height:1.5}
+.rc-c .rx-mr{transition:transform .4s var(--spring)}.rc-c.open .rx-mr{transform:rotate(45deg)}
+
+/* the reading line: on the body, since a fixed element inside a page scrolls away */
+#rc-read{position:fixed;left:0;right:0;top:50%;z-index:9;height:0;pointer-events:none;opacity:0;transition:opacity .35s}
+#rc-read.on{opacity:1}
+#rc-read .rl{position:absolute;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55) 8%,rgba(255,255,255,.55) 92%,transparent)}
+#rc-read .rp{position:absolute;top:-13px;height:26px;font-size:11.5px;display:flex;align-items:center;gap:8px;padding:0 12px;border-radius:999px;font-family:var(--mono);font-size:12px;font-weight:600;
+  color:#07080D;background:#fff;box-shadow:0 0 0 4px rgba(5,6,11,.6),0 0 22px rgba(255,255,255,.35);font-variant-numeric:tabular-nums;white-space:nowrap;transform:translateX(-100%)}
+#rc-read .rp.rt{transform:none;padding:0 9px;font-size:10.5px;height:22px;top:-11px}
+#rc-read .rp em{font-style:normal;font-weight:500;color:#6A7085}
+
+@media (max-width:760px){
+  .rc-ru{--ax:50px;--lw:15px}
+  .rc-yl{font-size:20px;letter-spacing:-.04em}
+  .rc-mt i{display:none}
+  .rc-b{width:8px;margin-left:calc(var(--lw) / 2 - 4px)}
+  .rc-b.rx-pt{width:12px;height:12px;margin-left:calc(var(--lw) / 2 - 6px)}
+  .rc-cards{left:calc(var(--ax) + var(--lw) * var(--lanes) + 14px)}
+  .rc-c{padding:14px 14px 12px;border-radius:20px}.rc-c h3{font-size:17px}.rc-c p{font-size:13.5px}.rc-c .rx-stt{margin-left:0}
+  .rc-key{margin-left:0}.rc-sum{gap:12px 22px}
+  .rc-gap{padding-left:calc(var(--ax) + var(--lw) * var(--lanes) + 14px)}.rc-gap span{display:none}
+  .rc-mm{top:calc(70px + env(safe-area-inset-top,0px));padding:8px 10px 6px}
+  .rc-now b,.rc-plz b{display:none}
+}
+@media (prefers-reduced-motion:reduce){.rc-c,.rc-c.pre{transition:none;opacity:1;transform:none}}
+.touch .rc-c.lq.bd{background-color:rgba(20,22,32,.72)}
+</style>
 </head>
 <body>
 <a class="skip" id="skip" href="#pages">Skip to content</a>
@@ -1868,8 +1998,8 @@ last = t</pre></div>
     <nav class="ps-dock" aria-label="Parts of this page"><i class="ps-dock-pill" aria-hidden="true"></i><button type="button" data-to="check">Check</button><button type="button" data-to="leak">Leaks</button><button type="button" data-to="gen">Generate</button><button type="button" data-to="vault">Vault</button><button type="button" data-to="codes">Codes</button><button type="button" data-to="how">More</button></nav>
   </div></section>
   <section class="page p-record" id="pg-record" aria-label="Record"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="rays" aria-hidden="true"></div><div class="wash"></div><div class="pc">
-    <h1 class="ttl r"><span class="tt">Record</span><span class="tb" aria-hidden="true">Record</span></h1><p class="lead r">Where I've been and what I picked up along the way.</p>
-    <div class="cards r"><article class="card lq"><h3>Siemens Energy</h3><p>Internship, PRAM department, Petrobrazi refinery.</p></article><article class="card lq"><h3>UniTBV · ETTI</h3><p>B.Eng. Telecommunications, Brașov.</p></article><article class="card lq"><h3>Certifications</h3><p>[Add yours, each with a verification link.]</p></article></div>
+    <h1 class="ttl r"><span class="tt">Record</span><span class="tb" aria-hidden="true">Record</span></h1><p class="lead r">Where I've been and what I picked up along the way: when each thing began, and when it ends. Scroll down through the months.</p>
+    <div class="rc" id="rc"></div>
   </div></div></section>
   <section class="page p-about" id="pg-about" aria-label="About"><div class="pw"><div class="pbg"></div><div class="abg" data-abg="waves" aria-hidden="true"></div><div class="wash"></div><div class="pc">
     <h1 class="ttl r"><span class="tt">About</span><span class="tb" aria-hidden="true">About</span></h1><p class="lead r">Off the clock: competitive tennis, F1 and games.</p>
@@ -2564,7 +2694,7 @@ function finish(o,n,P){
   o.classList.remove('active');[o,n,n.querySelector('.pw'),n.querySelector('.wash'),dimEl].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());
     Object.assign(el.style,{clipPath:'',transform:'',transformOrigin:'',opacity:'',zIndex:'',background:'',willChange:''})});
   n.querySelectorAll('.r').forEach(r=>r.style.willChange='');
-  n.classList.remove('warm');n.classList.add('active');n.classList.remove('pre');current=P.id;TH.page(P.id);PROJ.left(o,n);CT.left(o,n);CV.left(o,n);DROP.pause(false);
+  n.classList.remove('warm');n.classList.add('active');n.classList.remove('pre');current=P.id;TH.page(P.id);PROJ.left(o,n);CT.left(o,n);CV.left(o,n);REC.left(o,n);DROP.pause(false);
   ORBS.forEach(x=>{x.shown=false;x.b.getAnimations().forEach(a=>a.cancel());x.b.style.opacity='0';x.b.classList.remove('vis')});
   [LIGHT.el,orbsBox].forEach(el=>{el.getAnimations().forEach(a=>a.cancel());el.style.transform='';el.style.opacity=''});
   LIGHT.diveEnd();root.classList.remove('hush');
@@ -3858,6 +3988,149 @@ const INTRO=(()=>{const cur=$('#intro');let A=[],done=!cur;
 /* "privacy notice" links in running text (the Password Helper page): open the Privacy page */
 document.addEventListener('click',e=>{const a=e.target.closest('a.pv-link');if(!a)return;e.preventDefault();
   if(current==='pass'){PASS.leave();setTimeout(()=>jump('privacy'),1400)}else jump('privacy')});
+/* ---------- Record: the time ruler ----------
+   One entry per thing on the record: when it began (s, [year, month]) and when it ended or is planned to end (e). No e means
+   it is still going with no end set; plan marks something that has not started yet; pt is a single day. TODAY is worked out
+   from the visitor's date, so the bars in progress move on their own. Edit the dates here. */
+const REC=(()=>{const page=$('#pg-record'),box=$('#rc');if(!box)return{left(){}};
+  const LANES=[['edu','Education','#FFE14D'],['work','Work','#FF9F43'],['course','Courses','#5CF59A'],['build','Projects','#4DC8FF'],['vol','Volunteering','#FF5A6A']];
+  const D=[
+    {id:'ride',l:'vol',h:'The Fun Ride',s:[2019,10],pt:1,p:'A community bike event in Ploiești with Asociația Diabeticilor din Prahova, to raise awareness of diabetes. I volunteered there.'},
+    {id:'ausf',l:'vol',h:'Youth Hub AUSF',s:[2021,10],e:[2021,11],p:'I volunteered with Youth Hub AUSF in Ploiești: I supported activities at a children’s home, mentored the kids and took part in AUSF workshops.'},
+    {id:'beng',l:'edu',h:'B.Eng., Telecommunication Systems and Technologies',s:[2022,10],e:[2026,7],p:'Four years at Transilvania University of Brașov, Faculty of Electrical Engineering and Computer Science.',
+      mk:[[2026,7,'Thesis graded 9.00 out of 10']],
+      x:[['The courses','Telecommunication systems, signal processing, microcontrollers and computer networks.'],['The tools','MATLAB for signal work, OrCAD for schematics and AutoCAD for drawings.']],go:['See it on my CV','cv']},
+    {id:'goit',l:'course',h:'Cybersecurity course, GoIT Romania',s:[2024,9],e:[2025,6],p:'Penetration testing, vulnerability analysis and security auditing.',mk:[[2025,6,'Certificate']],
+      x:[['What it covered','Penetration testing means attacking a system, with permission, to find its weaknesses before someone else does. Vulnerability analysis finds and ranks them, and a security audit checks a system against the rules it should enforce.']],go:['Certificate link coming',null]},
+    {id:'lab',l:'course',h:'My home lab',s:[2025,1],p:'Where I practise: virtual machines in VMware with Parrot OS, Metasploitable 2 and GNS3, plus TryHackMe rooms.'},
+    {id:'siemens',l:'work',h:'Internship at Siemens Energy',s:[2025,7],e:[2025,8],p:'PRAM department, Petrobrazi refinery: the refinery’s electrical power distribution.',
+      x:[['Protection relays','They trip the breaker when they detect a fault, so it doesn’t spread. I helped find problems in them and test them.'],['PLC and HMI','Programming tasks on the controller that runs the logic and on the screen operators use.'],['SCADA','I supported a restart of the SCADA server and the relay tests that followed.'],['6 kV and 0.4 kV switchgear','I took part in testing switchgear cells at both voltage levels.']],go:['See it on my CV','cv']},
+    {id:'rover',l:'build',h:'DataLink Rover, my thesis',s:[2025,10],e:[2026,6],p:'A tracked robot, its remote controller and the link between them, from the electronics to the control software in Python.',
+      x:[['The link','The controller sends every command over Wi-Fi and a fibre link at the same time, so the rover keeps driving even when the radio is jammed.']],go:['Open the project','projects']},
+    {id:'site',l:'build',h:'This website',s:[2026,9],p:'Designed and built by me in plain HTML, CSS and JavaScript, and still growing.',go:['See my projects','projects']},
+    {id:'msc',l:'edu',h:'M.Sc., Integrated Electronic and Communication Systems',s:[2026,10],e:[2028,7],p:'A two-year master’s (SECI) at the same faculty in Brașov.',go:['See it on my CV','cv']},
+    {id:'ccna1',l:'course',h:'Cisco CCNA 1',s:[2026,10],e:[2027,1],p:'Introduction to Networks at Telecom Academy, the first of Cisco’s three CCNA courses.'},
+    {id:'ccna',l:'course',h:'CCNA 2 and 3, then the exam',s:[2027,2],e:[2027,9],plan:1,p:'The other two Cisco courses, then the CCNA certification exam.'},
+    {id:'job',l:'work',h:'First job in cyber security',s:[2027,2],plan:1,p:'An internship or a junior role on the defending side (blue team), alongside the master’s.'}];
+  const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],MONL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const T=(y,m,end)=>y+(m-1)/12+(end?1/12:0),now=new Date(),TODAY=now.getFullYear()+(now.getMonth()+(now.getDate()-1)/31)/12;
+  const fm=t=>{const y=Math.floor(t+1e-6),m=Math.min(11,Math.floor((t-y)*12+1e-6));return`${MON[m]} ${y}`};
+  const dur=(a,b)=>{const mo=Math.max(1,Math.round((b-a)*12)),y=Math.floor(mo/12),r=mo%12;return[y?`${y} year${y>1?'s':''}`:'',r?`${r} month${r>1?'s':''}`:''].filter(Boolean).join(' ')};
+  const lc=l=>LANES.find(x=>x[0]===l)[2],li=l=>LANES.findIndex(x=>x[0]===l),ln=l=>LANES.find(x=>x[0]===l)[1];
+  D.forEach(x=>{x.a=T(...x.s);x.b=x.pt?x.a+1/12:x.e?T(...x.e,1):null;x.st=x.plan||x.a>TODAY?'plan':x.b==null?'open':x.b<=TODAY?'done':'now';
+    x.vis=x.b==null?(x.st==='plan'?x.a+.75:TODAY):x.b;      /* where the bar stops on the ruler */
+    x.pc=x.st==='now'?clamp((TODAY-x.a)/(x.b-x.a)):null});
+  D.sort((p,q)=>p.a-q.a||li(p.l)-li(q.l));
+
+  /* ---- the time scale, with long empty stretches folded ---- */
+  const busy0=D.map(x=>[x.a-2/12,x.vis+2/12]).sort((p,q)=>p[0]-q[0]),act=[];
+  busy0.forEach(r=>{const l=act[act.length-1];if(l&&r[0]<=l[1])l[1]=Math.max(l[1],r[1]);else act.push([...r])});
+  const R0=Math.floor(act[0][0]*12)/12,R1=Math.ceil(Math.max(act[act.length-1][1],TODAY+.25)*12)/12,GAP=10/12;
+  let SEG=[];        /* [t0, t1, folded] */
+  function segs(){SEG=[];let t=R0;act.forEach(([a,b],i)=>{if(a-t>GAP)SEG.push([t,a,true]);else if(a>t)SEG.push([t,a,false]);SEG.push([Math.max(t,a),b,false]);t=b});if(R1>t)SEG.push([t,R1,false])}
+  segs();
+  let PXM=34,FOLD=110,TOT=0;const Y=t=>{let y=0;for(const[s0,s1,f]of SEG){if(t<=s1){return y+(f?(t-s0)/(s1-s0)*FOLD:(t-s0)*12*PXM)}y+=f?FOLD:(s1-s0)*12*PXM}return y};
+  const Tof=y=>{let acc=0;for(const[s0,s1,f]of SEG){const h=f?FOLD:(s1-s0)*12*PXM;if(y<=acc+h)return f?{t:s0+(y-acc)/FOLD*(s1-s0),fold:[s0,s1]}:{t:s0+(y-acc)/(12*PXM)};acc+=h}return{t:R1}};
+
+  /* ---- the parts that never change ---- */
+  const inP=D.filter(x=>x.st==='now'||x.st==='open'),nextP=D.filter(x=>x.st==='plan').sort((p,q)=>p.a-q.a)[0];
+  box.innerHTML=`<div class="rc-sum r"><div class="rc-st"><b>${Math.floor(TODAY)-Math.floor(R0)}</b><span>years on the record</span></div><div class="rc-st"><b>${D.length}</b><span>entries</span></div>
+      <div class="rc-st"><b>${inP.length}</b><span>going on now</span></div>${nextP?`<div class="rc-st rx-nx"><b>${nextP.h}</b><span>next · from ${fm(nextP.a)}</span></div>`:''}
+      <div class="rc-key" role="group" aria-label="Show one kind">${LANES.filter(L=>D.some(x=>x.l===L[0])).map(L=>`<button data-l="${L[0]}" style="--lc:${L[2]}" aria-pressed="false"><i></i>${L[1]}</button>`).join('')}</div></div>
+    <div class="rc-mm lq bd r" role="slider" aria-label="Jump to a date" tabindex="0"><div class="rx-tr"></div><div class="rx-ax"></div></div>
+    <div class="rc-ru" role="list"></div>`;
+  const ru=box.querySelector('.rc-ru'),mm=box.querySelector('.rc-mm'),mmT=mm.querySelector('.rx-tr'),mmA=mm.querySelector('.rx-ax');
+  const M0=Math.floor(R0),M1=Math.ceil(R1),mx=t=>((t-M0)/(M1-M0)*100).toFixed(2)+'%';
+  mmT.innerHTML=D.map(x=>x.pt?`<i class="rx-pt" style="--lc:${lc(x.l)};left:${mx(x.a)};top:${4+li(x.l)*5.5}px"></i>`:`<i class="rx-ln${x.st==='plan'?' rx-pl':''}" style="--lc:${lc(x.l)};left:${mx(x.a)};width:calc(${mx(x.vis)} - ${mx(x.a)});top:${4+li(x.l)*5.5}px"></i>`).join('')+
+    `<i class="rx-td" style="left:${mx(TODAY)}"></i><i class="rx-win"></i>`;
+  mmA.innerHTML=Array.from({length:M1-M0+1},(_,i)=>`<span style="left:${mx(M0+i)}">${M0+i}</span>`).join('');
+  const win=mmT.querySelector('.rx-win');
+  const read=document.createElement('div');read.id='rc-read';read.setAttribute('aria-hidden','true');read.innerHTML='<div class="rl"></div><div class="rp"></div>';document.body.appendChild(read);
+  const rl=read.querySelector('.rl'),rp=read.querySelector('.rp');
+
+  /* bars, cards and connectors */
+  const cx=document.createElementNS('http://www.w3.org/2000/svg','svg');cx.setAttribute('class','rc-cx');cx.setAttribute('aria-hidden','true');
+  const lanesEl=document.createElement('div');lanesEl.className='rc-lanes';lanesEl.innerHTML=LANES.map((_,i)=>`<i class="rx-gl" style="left:calc(var(--lw) * ${i})"></i>`).join('');
+  const cards=document.createElement('div');cards.className='rc-cards';
+  const E=D.map(x=>{const col=lc(x.l),b=document.createElement('button');b.className='rc-b'+(x.pt?' rx-pt':'');b.dataset.st=x.st;b.style.setProperty('--lc',col);b.style.left=`calc(var(--lw) * ${li(x.l)})`;
+    b.setAttribute('aria-label',`${x.h}, ${x.pt?fm(x.a):`${fm(x.a)} to ${x.b==null?'now':fm(x.b-1/12)}`}`);
+    b.innerHTML='<span class="rx-f"></span>'+(x.mk||[]).map(m=>`<span class="rx-mk" data-t="${T(m[0],m[1],1)}"></span>`).join('')+'<span class="rx-lt"></span>';lanesEl.appendChild(b);
+    const range=x.pt?fm(x.a):`${fm(x.a)} – ${x.b==null?(x.st==='plan'?'…':'now'):fm(x.b-1/12)}`,
+      len=x.pt?'One day':x.b==null?(x.st==='plan'?'Planned, no end date yet':`${dur(x.a,TODAY)} so far`):x.st==='plan'?`Planned · ${dur(x.a,x.b)}`:x.st==='now'?`${dur(x.a,x.b)} in all · ${dur(x.a,TODAY)} done`:dur(x.a,x.b),
+      stt={done:'Done',now:`${Math.round((x.pc||0)*100)}% done`,open:'Ongoing',plan:'Planned'}[x.st];
+    const c=document.createElement('article');c.className='rc-c lq bd pre';c.dataset.st=x.st;c.dataset.l=x.l;c.style.setProperty('--lc',col);c.setAttribute('role','listitem');
+    c.innerHTML=`<div class="rx-hd"><span class="rx-dr">${range}</span><span class="rx-ln">${ln(x.l)}</span><span class="rx-stt">${stt}</span></div><h3>${x.h}</h3><div class="rx-du">${len}</div><p>${x.p}</p>
+      ${x.st==='now'?`<div class="rx-pg" style="--p:${((x.pc||0)*100).toFixed(1)}%"><i></i></div>`:''}${(x.mk||[]).map(m=>`<div class="rx-ms"><i></i>${m[2]} · ${MON[m[1]-1]} ${m[0]}</div>`).join('')}
+      ${x.x?`<div class="rx-mo"><div><dl>${x.x.map(d=>`<div><dt>${d[0]}</dt><dd>${d[1]}</dd></div>`).join('')}</dl></div></div>`:''}
+      ${x.x||x.go?`<div class="rx-ac">${x.x?'<button class="rx-more" aria-expanded="false"><span class="rx-mr">+</span> More</button>':''}${x.go?(x.go[1]?`<button class="rc-go" data-go="${x.go[1]}" data-from="self">${x.go[0]} →</button>`:`<button disabled>${x.go[0]}</button>`):''}</div>`:''}`;
+    cards.appendChild(c);const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('stroke',col);cx.appendChild(p);
+    return{x,b,c,p}});
+  ru.append(cx,lanesEl,cards);
+
+  /* the year blocks (their numbers stay next to the reading line), month ticks, folds, today and the planned zone */
+  const bg=document.createElement('div');bg.className='rc-bg';ru.prepend(bg);
+  function scale(){bg.innerHTML='';let html='';
+    for(let y=Math.floor(R0);y<=Math.ceil(R1);y++){const a=Math.max(R0,y),b=Math.min(R1,y+1);if(b<=a)continue;
+      const segsIn=SEG.filter(s=>!s[2]&&s[1]>a&&s[0]<b);if(!segsIn.length)continue;const ya=Y(Math.max(a,segsIn[0][0])),yb=Y(Math.min(b,segsIn[segsIn.length-1][1]));
+      html+=`<div class="rc-yb" data-y="${y}" style="top:${ya.toFixed(1)}px;height:${(yb-ya).toFixed(1)}px"><span class="rc-yl">${y}</span></div>`}
+    for(const[s0,s1,f]of SEG){if(f){const y0=Y(s0),y1=Y(s1),yr=[Math.ceil(s0),Math.floor(s1-.01)];
+        html+=`<div class="rc-gap" style="top:${y0.toFixed(1)}px;height:${(y1-y0).toFixed(1)}px"><svg preserveAspectRatio="none" viewBox="0 0 100 16"><path d="M0 8 ${Array.from({length:25},(_,i)=>`L${(i*4+2).toFixed(0)} ${i%2?3:13}`).join(' ')} L100 8"/></svg><span>${yr[0]===yr[1]?yr[0]:`${fm(s0)} – ${fm(s1-1/12)}`} · nothing on the record</span></div>`;continue}
+      for(let t=Math.ceil(s0*12-1e-6)/12;t<s1-1e-6;t+=1/12){const m=Math.round((t-Math.floor(t+1e-6))*12)%12;if(m===0)continue;html+=`<div class="rc-mt${m%3===0?' q':''}" style="top:${Y(t).toFixed(1)}px">${m%3===0?`<i>${MON[m]}</i>`:''}</div>`}}
+    const ny=Y(TODAY);html+=`<div class="rc-plz" style="top:${ny.toFixed(1)}px"><b>PLANNED</b></div><div class="rc-now" style="top:${ny.toFixed(1)}px"><b>TODAY · ${now.getDate()} ${MON[now.getMonth()]} ${now.getFullYear()}</b></div>`;
+    bg.innerHTML=html}
+  let H=0,yrs=[],shown=false,raf=0,laid=false;
+  function layout(){if(!page.classList.contains('active')&&!page.classList.contains('warm'))return;const mob=innerWidth<=760;PXM=mob?26:34;FOLD=mob?80:110;
+    scale();yrs=[...bg.querySelectorAll('.rc-yb')];
+    const cs=getComputedStyle(ru),ax=parseFloat(cs.getPropertyValue('--ax')),lw=parseFloat(cs.getPropertyValue('--lw')),cl=cards.offsetLeft;let bottom=0;
+    E.forEach(({x,b,c,p})=>{const y0=Y(x.a),y1=Y(x.vis);b.style.top=y0.toFixed(1)+'px';if(!x.pt)b.style.height=Math.max(10,y1-y0).toFixed(1)+'px';else b.style.marginTop='-8px';
+      if(x.st==='now')b.style.setProperty('--p',((Y(TODAY)-y0)/Math.max(1,y1-y0)*100).toFixed(2)+'%');
+      b.querySelectorAll('.rx-mk').forEach(m=>m.style.top=(Y(+m.dataset.t)-y0).toFixed(1)+'px');
+      const want=y0-14,top=Math.max(want,bottom+14);c.style.top=top.toFixed(1)+'px';bottom=top+c.offsetHeight;
+      const bx=ax+lw*(li(x.l)+.5),ex=cl-6,cy=top+26;p.setAttribute('d',`M${bx+8} ${y0.toFixed(1)} H${(bx+(ex-bx)*.55).toFixed(1)} C${(ex-10).toFixed(1)} ${y0.toFixed(1)} ${(ex-24).toFixed(1)} ${cy.toFixed(1)} ${ex} ${cy.toFixed(1)}`)});
+    H=Math.max(Y(R1),bottom+40);ru.style.height=H+'px';cx.setAttribute('viewBox',`0 0 ${ru.offsetWidth} ${H}`);cx.style.height=H+'px';laid=true;scroll()}
+  /* ---- the reading line ---- */
+  let lastKey='',lastYear=null;
+  function scroll(){raf=0;if(!laid)return;const r=ru.getBoundingClientRect(),ly=innerHeight*.5,inside=r.top<ly&&r.bottom>ly&&current==='record'&&!busy&&!menuOpen;
+    read.classList.toggle('on',inside);
+    const mmr=mm.getBoundingClientRect(),t0=Tof(clamp(mmr.bottom+20-r.top,0,H)).t,t1=Tof(clamp(innerHeight-r.top,0,H)).t;
+    win.style.left=mx(t0);win.style.width=`calc(${mx(t1)} - ${mx(t0)})`;
+    const lane=lanesEl.getBoundingClientRect();rl.style.left=lane.left-12+'px';rl.style.right=Math.max(0,innerWidth-r.right)+'px';const narrow=lane.left<150;rp.classList.toggle('rt',narrow);rp.style.left=narrow?'6px':lane.left-16+'px';
+    const q=Tof(ly-r.top),t=q.t,key=q.fold?'f'+q.fold[0]:fm(t);
+    if(key!==lastKey||narrow!==rp._n){lastKey=key;rp._n=narrow;rp.innerHTML=q.fold?`${Math.ceil(q.fold[0])}–${Math.floor(q.fold[1]-.01)} <em>quiet</em>`:`${(narrow?MON:MONL)[Math.floor((t-Math.floor(t+1e-6))*12+1e-6)%12]} ${Math.floor(t+1e-6)}${narrow?'':Math.abs(t-TODAY)<1/24?' <em>today</em>':t>TODAY?' <em>planned</em>':''}`}
+    const yy=Math.floor(t+1e-6);if(yy!==lastYear){lastYear=yy;yrs.forEach(e=>e.classList.toggle('on',+e.dataset.y===yy))}
+    const rel=ly-r.top;E.forEach(({x,b,c,p})=>{const y0=Y(x.a),y1=x.pt?y0+8:Y(x.vis),on=rel>=y0-6&&rel<=y1+6;b.classList.toggle('act',on);
+      if(on)b.querySelector('.rx-lt').style.top=clamp(rel-y0,0,Math.max(0,y1-y0)).toFixed(1)+'px';
+      const ct=parseFloat(c.style.top),near=on||rel>=ct-20&&rel<=ct+c.offsetHeight+20;c.classList.toggle('on',near);p.classList.toggle('on',near)})}
+  page.addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(scroll)},{passive:true});
+  addEventListener('resize',()=>{clearTimeout(REC._t);REC._t=setTimeout(()=>{if(current==='record')layout()},180)});
+  /* cards come in once, as they first reach the screen */
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.remove('pre');io.unobserve(e.target)}}),{root:page,rootMargin:'0px 0px -12% 0px'});
+  E.forEach(({c})=>reduce?c.classList.remove('pre'):io.observe(c));
+  /* hovering a bar or a card points at the other */
+  E.forEach(({b,c,p,x})=>{const on=v=>{b.classList.toggle('hot',v);c.classList.toggle('hot',v);p.classList.toggle('hot',v)};
+    [b,c].forEach(el=>{el.addEventListener('pointerenter',()=>on(true));el.addEventListener('pointerleave',()=>on(false))});
+    b.addEventListener('click',()=>{const top=parseFloat(c.style.top),r=ru.getBoundingClientRect();page.scrollTo({top:page.scrollTop+r.top+top-innerHeight*.5+30,behavior:reduce?'auto':'smooth'})});
+    const more=c.querySelector('.rx-more'),mo=c.querySelector('.rx-mo');
+    if(more)more.addEventListener('click',()=>{const open=!c.classList.contains('open');c.classList.toggle('open',open);more.setAttribute('aria-expanded',open);
+      const from=mo.offsetHeight,to=open?mo.scrollHeight:0;mo.getAnimations().forEach(a=>a.cancel());mo.style.height=to+'px';
+      const a=mo.animate([{height:from+'px'},{height:to+'px'}],{duration:reduce?1:open?560:380,easing:open?SOFT:EASE});
+      a.finished.then(()=>{if(open)mo.style.height='auto';layout()}).catch(()=>{})})});
+  /* the legend: show one kind at a time */
+  let only=null;box.querySelectorAll('.rc-key button').forEach(k=>k.addEventListener('click',()=>{only=only===k.dataset.l?null:k.dataset.l;
+    box.querySelectorAll('.rc-key button').forEach(q=>{q.classList.toggle('off',!!only&&q.dataset.l!==only);q.setAttribute('aria-pressed',q.dataset.l===only)});
+    ru.classList.toggle('flt',!!only);E.forEach(({x,b,c,p})=>[b,c,p].forEach(el=>el.classList.toggle('dim',!!only&&x.l!==only)))}));
+  /* the small map: click or drag to jump; arrow keys step a month */
+  const jumpTo=(t,smooth)=>{const r=ru.getBoundingClientRect();page.scrollTo({top:page.scrollTop+r.top+Y(clamp(t,R0,R1))-innerHeight*.5,behavior:smooth&&!reduce?'smooth':'auto'})};
+  let mdrag=false;const mmT2=e=>{const r=mmT.getBoundingClientRect();return M0+clamp((e.clientX-r.left)/r.width)*(M1-M0)};
+  mm.addEventListener('pointerdown',e=>{mdrag=true;mm.setPointerCapture(e.pointerId);jumpTo(mmT2(e),true)});mm.addEventListener('pointermove',e=>{if(mdrag)jumpTo(mmT2(e),false)});
+  mm.addEventListener('pointerup',()=>mdrag=false);mm.addEventListener('pointercancel',()=>mdrag=false);
+  mm.addEventListener('keydown',e=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;e.preventDefault();const t=Tof(innerHeight*.5-ru.getBoundingClientRect().top).t;jumpTo(t+(e.key==='ArrowRight'?1:-1)/12,true)});
+  LQ.watch(mm,{tier:1,sc:40,blur:3});
+  /* called from finish(): o is the page we left, n the one we arrived on */
+  new MutationObserver(()=>{if(laid)scroll()}).observe($('#island'),{attributes:true,attributeFilter:['aria-expanded']});
+  function left(o,n){if(n===page){layout();shown=true;setTimeout(scroll,80)}else if(o===page){read.classList.remove('on')}}
+  return{left,layout}})();
+
 /* ---------- boot ---------- */
 /* glass that bends what is behind it: project cards and the details sheet, and on the full tier the story cards over the 3D model */
 document.querySelectorAll('.pj.lq').forEach(el=>LQ.watch(el,{tier:1,sc:46,blur:3}));
